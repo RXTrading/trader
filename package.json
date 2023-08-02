@@ -1,0 +1,62 @@
+{
+  "name": "@rxtrader/trader",
+  "version": "0.0.1",
+  "description": "A reactive (\"Rx\") trader",
+  "keywords": [
+    "trader",
+    "trading",
+    "algorithmic",
+    "crypto",
+    "backtesting"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "c8 mocha ./test",
+    "lint": "standard --verbose",
+    "lint:fix": "standard --verbose --fix"
+  },
+  "author": "srcmayte@gmail.com",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rxtrader/trader"
+  },
+  "homepage": "https://github.com/rxtrader/trader",
+  "dependencies": {
+    "bignumber.js": "^9.1.0",
+    "eventemitter2": "^6.4.9",
+    "fastest-validator": "^1.15.0",
+    "jsonata": "^2.0.3",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.19.6",
+    "@babel/eslint-parser": "^7.19.1",
+    "c8": "^7.12.0",
+    "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
+    "chai-datetime": "^1.8.0",
+    "chai-samsam": "^0.0.2",
+    "chai-uuid": "^1.0.6",
+    "chance": "^1.1.9",
+    "dirty-chai": "^2.0.1",
+    "mocha": "^10.1.0",
+    "sinon": "^15.0.1",
+    "sinon-chai": "^3.7.0",
+    "standard": "^17.0.0"
+  },
+  "standard": {
+    "parser": "@babel/eslint-parser",
+    "globals": [
+      "describe",
+      "it",
+      "expect",
+      "before",
+      "beforeEach",
+      "after",
+      "afterEach"
+    ]
+  }
+}
