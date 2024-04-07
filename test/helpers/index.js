@@ -16,11 +16,14 @@ chai.use(require('chai-uuid'))
 chai.use(require('dirty-chai'))
 chai.use(require('sinon-chai'))
 
+const behaviours = require('./behaviours')
+
 module.exports = {
   expect,
   sinon,
   chance,
   BigNumber,
   Factory,
-  moment
+  moment,
+  behaviours
 }

@@ -1,10 +1,10 @@
-const { expect, chance, sinon } = require('./helpers')
+const { expect, behaviours, chance, sinon, Factory } = require('./helpers')
 
 const SignalManager = require('../lib/signalManager')
 const Trader = require('../lib/trader')
 const Exchange = require('../lib/exchanges/simulation')
 const { ValidationError } = require('../lib/errors')
-const { Signal, Position, Order } = require('../lib/models')
+const { Signal, Position } = require('../lib/models')
 
 describe('SignalManager', () => {
   describe('options', () => {
@@ -14,94 +14,48 @@ describe('SignalManager', () => {
     }
 
     describe('trader', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new SignalManager({ ...defaultParams, trader: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('SIGNAL_MANAGER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('trader is required')
+      behaviours.throwsSignalManagerValidationError('is required', {
+        check: () => (new SignalManager({ ...defaultParams, trader: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('trader is required')
       })
 
-      it('must be an Object', () => {
-        let thrownErr = null
-
-        try {
-          new SignalManager({ ...defaultParams, trader: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('SIGNAL_MANAGER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('trader must be an Object')
+      behaviours.throwsSignalManagerValidationError('is required', {
+        check: () => (new SignalManager({ ...defaultParams, trader: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('trader must be an Object')
       })
 
       describe('props', () => {
         describe('emit', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              new SignalManager({ ...defaultParams, trader: {} }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('SIGNAL_MANAGER_VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('trader.emit is required')
+          behaviours.throwsSignalManagerValidationError('is required', {
+            check: () => (new SignalManager({ ...defaultParams, trader: {} })),
+            expect: error => expect(error.data[0].message).to.eql('trader.emit is required')
           })
 
-          it('must be a function', () => {
-            let thrownErr = null
-
-            try {
-              new SignalManager({ ...defaultParams, trader: { emit: chance.string() } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('SIGNAL_MANAGER_VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('trader.emit must be a function')
+          behaviours.throwsSignalManagerValidationError('must be a function', {
+            check: () => (new SignalManager({ ...defaultParams, trader: { emit: chance.string() } })),
+            expect: error => expect(error.data[0].message).to.eql('trader.emit must be a function')
           })
         })
       })
     })
 
     describe('backtest', () => {
-      it('must be a boolean', () => {
-        let thrownErr = null
-
-        try {
-          new SignalManager({ ...defaultParams, backtest: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('SIGNAL_MANAGER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('backtest must be a boolean')
+      behaviours.throwsSignalManagerValidationError('must be boolean', {
+        check: () => (new SignalManager({ ...defaultParams, backtest: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('backtest must be a boolean')
       })
     })
   })
 
   describe('#process', () => {
     describe('when signal is invalid', () => {
-      it('throws an error', async () => {
-        const manager = new SignalManager({ trader: new Trader({ exchange: new Exchange() }) })
+      behaviours.throwsValidationError('throws an error', {
+        check: () => {
+          const manager = new SignalManager({ trader: new Trader({ exchange: new Exchange() }) })
 
-        let thrownErr = null
-
-        try {
-          await manager.process()
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.message).to.eql('Signal validation error')
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
+          return manager.process()
+        },
+        expect: error => expect(error.message).to.eql('Signal validation error')
       })
     })
 
@@ -122,7 +76,10 @@ describe('SignalManager', () => {
 
         it('emits signal.received with signal', async () => {
           const manager = new SignalManager({ trader })
-          const params = { example: true }
+          const params = {
+            type: Position.types.LONG,
+            entries: Factory('orderOptions').build()
+          }
 
           const signal = await manager.process({ type: Signal.types.OPEN_POSITION, params })
 
@@ -137,13 +94,7 @@ describe('SignalManager', () => {
           market: 'BTC/USDT',
           status: chance.pickone(Object.values(Position.statuses)),
           type: chance.pickone(Object.values(Position.types)),
-          entry: {
-            exchange: 'binance',
-            market: 'BTC/USDT',
-            type: chance.pickone(Object.values(Order.types)),
-            price: chance.integer({ min: 1, max: 100 }),
-            quoteQuantity: 1000.00
-          }
+          entries: Factory('orderOptions').build()
         }
 
         let error
@@ -183,18 +134,13 @@ describe('SignalManager', () => {
             traderStub.restore()
           })
 
-          it('re-throws the error', async () => {
-            let thrownErr = null
+          behaviours.throws('throws an error', undefined, {
+            check: () => {
+              const manager = new SignalManager({ trader })
 
-            const manager = new SignalManager({ trader })
-
-            try {
-              await manager.process({ type: Signal.types.OPEN_POSITION, params })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.message).to.eql('Something seriously went wrong')
+              return manager.process({ type: Signal.types.OPEN_POSITION, params })
+            },
+            expect: error => expect(error.message).to.eql('Something seriously went wrong')
           })
         })
       })
@@ -215,7 +161,14 @@ describe('SignalManager', () => {
           const manager = new SignalManager({ trader, backtest: true })
           const timestamp = chance.date()
 
-          const signal = await manager.process({ type: Signal.types.OPEN_POSITION, timestamp })
+          const signal = await manager.process({
+            type: Signal.types.OPEN_POSITION,
+            params: {
+              timestamp,
+              type: Position.types.LONG,
+              entries: Factory('orderOptions').build()
+            }
+          })
 
           expect(signal.params.timestamp).to.eql(timestamp)
         })
@@ -240,13 +193,7 @@ describe('SignalManager', () => {
             market: 'BTC/USDT',
             status: chance.pickone(Object.values(Position.statuses)),
             type: chance.pickone(Object.values(Position.types)),
-            entry: {
-              exchange: 'binance',
-              market: 'BTC/USDT',
-              type: chance.pickone(Object.values(Order.types)),
-              price: chance.integer({ min: 1, max: 100 }),
-              quoteQuantity: 1000.00
-            }
+            entries: Factory('orderOptions').build()
           }
 
           const signal = await manager.process({ type: Signal.types.OPEN_POSITION, params })
@@ -275,13 +222,7 @@ describe('SignalManager', () => {
             market: 'BTC/USDT',
             status: chance.pickone(Object.values(Position.statuses)),
             type: chance.pickone(Object.values(Position.types)),
-            entry: {
-              exchange: 'binance',
-              market: 'BTC/USDT',
-              type: chance.pickone(Object.values(Order.types)),
-              price: chance.integer({ min: 1, max: 100 }),
-              quoteQuantity: 1000.00
-            }
+            entries: Factory('orderOptions').build()
           }
 
           const signal = await manager.process({ type: Signal.types.OPEN_POSITION, params })
@@ -309,13 +250,7 @@ describe('SignalManager', () => {
             market: 'BTC/USDT',
             status: chance.pickone(Object.values(Position.statuses)),
             type: chance.pickone(Object.values(Position.types)),
-            entry: {
-              exchange: 'binance',
-              market: 'BTC/USDT',
-              type: chance.pickone(Object.values(Order.types)),
-              price: chance.integer({ min: 1, max: 100 }),
-              quoteQuantity: 1000.00
-            }
+            entries: Factory('orderOptions').build()
           }
 
           const signal = await manager.process({ type: Signal.types.OPEN_POSITION, params })

@@ -1,4 +1,4 @@
-const { expect, chance } = require('../helpers')
+const { expect, chance, behaviours } = require('../helpers')
 
 const Log = require('../../lib/models/log')
 
@@ -12,17 +12,9 @@ describe('Log Model', () => {
     }
 
     describe('timestamp', () => {
-      it('must be a date', () => {
-        let thrownErr = null
-
-        try {
-          new Log({ ...defaultParams, timestamp: 'tomorrow' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('timestamp must be a Date')
+      behaviours.throwsValidationError('must be a date', {
+        check: () => (new Log({ ...defaultParams, timestamp: 'tomorrow' })),
+        expect: error => expect(error.data[0].message).to.eql('timestamp must be a Date')
       })
 
       it('defaults to current time', () => {
@@ -34,73 +26,33 @@ describe('Log Model', () => {
     })
 
     describe('type', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Log({ ...defaultParams, type: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('type is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Log({ ...defaultParams, type: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('type is required')
       })
 
-      it('must match one of info, success, warning, error', () => {
-        let thrownErr = null
-
-        try {
-          new Log({ ...defaultParams, type: chance.string({ max: 5, aplha: true }) }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('type must match one of info, success, warning, error')
+      behaviours.throwsValidationError('must match one of info, success, warning, error', {
+        check: () => (new Log({ ...defaultParams, type: chance.string({ max: 5, aplha: true }) })),
+        expect: error => expect(error.data[0].message).to.eql('type must match one of info, success, warning, error')
       })
     })
 
     describe('code', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Log({ ...defaultParams, code: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('code is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Log({ ...defaultParams, code: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('code is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new Log({ ...defaultParams, code: chance.integer() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('code must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new Log({ ...defaultParams, code: chance.integer() })),
+        expect: error => expect(error.data[0].message).to.eql('code must be a string')
       })
     })
 
     describe('data', () => {
-      it('must be an object', () => {
-        let thrownErr = null
-
-        try {
-          new Log({ ...defaultParams, data: chance.integer() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('data must be an Object')
+      behaviours.throwsValidationError('must be an object', {
+        check: () => (new Log({ ...defaultParams, data: chance.integer() })),
+        expect: error => expect(error.data[0].message).to.eql('data must be an Object')
       })
 
       it('defaults to an empty object', () => {

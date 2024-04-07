@@ -1,5 +1,5 @@
 {
-  "name": "@rxtrader/trader",
+  "name": "@rxtrading/trader",
   "version": "0.0.1",
   "description": "A reactive (\"Rx\") trader",
   "keywords": [

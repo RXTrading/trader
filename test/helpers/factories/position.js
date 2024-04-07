@@ -1,6 +1,6 @@
 const _ = require('lodash')
 
-const { Position, Order } = require('../../../lib/models')
+const { Position, OrderOptions } = require('../../../lib/models')
 
 module.exports = Factory => {
   Factory.define('position', function (overrides, chance) {
@@ -9,14 +9,14 @@ module.exports = Factory => {
       market: 'BTC/USDT',
       status: Position.statuses.OPEN,
       type: Position.types.LONG,
-      entry: {
+      entries: [{
         exchange: 'binance',
         market: 'BTC/USDT',
-        type: Order.types.LIMIT,
+        type: OrderOptions.types.LIMIT,
         price: chance.integer({ min: 1, max: 10 }),
         quoteQuantity: chance.integer({ min: 100, max: 1000 })
-      },
-      exit: [],
+      }],
+      exits: [],
       orders: []
     }))
   })

@@ -1,4 +1,4 @@
-const { expect, chance } = require('../helpers')
+const { expect, chance, behaviours } = require('../helpers')
 
 const Balance = require('../../lib/models/balance')
 
@@ -12,58 +12,26 @@ describe('Balance Model', () => {
     }
 
     describe('symbol', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, symbol: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('symbol is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Balance({ ...defaultParams, symbol: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('symbol is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, symbol: chance.bool() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('symbol must be a string')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Balance({ ...defaultParams, symbol: chance.bool() })),
+        expect: error => expect(error.data[0].message).to.eql('symbol must be a string')
       })
     })
 
     describe('free', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, free: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('free must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Balance({ ...defaultParams, free: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('free must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, free: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('free must be greater than or equal to 0')
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new Balance({ ...defaultParams, free: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('free must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {
@@ -75,30 +43,14 @@ describe('Balance Model', () => {
     })
 
     describe('used', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, used: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('used must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Balance({ ...defaultParams, used: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('used must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, used: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('used must be greater than or equal to 0')
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new Balance({ ...defaultParams, used: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('used must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {
@@ -110,30 +62,14 @@ describe('Balance Model', () => {
     })
 
     describe('total', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, total: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('total must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Balance({ ...defaultParams, total: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('total must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new Balance({ ...defaultParams, total: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('total must be greater than or equal to 0')
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new Balance({ ...defaultParams, total: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('total must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {

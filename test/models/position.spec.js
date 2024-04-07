@@ -1,8 +1,8 @@
 const _ = require('lodash')
 
-const { expect, Factory, chance, moment } = require('../helpers')
+const { expect, Factory, chance, moment, behaviours } = require('../helpers')
 
-const { Position, Order } = require('../../lib/models')
+const { Position, Order, OrderOptions } = require('../../lib/models')
 
 describe('Position Model', () => {
   it('has types', () => {
@@ -24,27 +24,29 @@ describe('Position Model', () => {
         market: 'BTC/USDT',
         status: chance.pickone(Object.values(Position.statuses)),
         type: chance.pickone(Object.values(Position.types)),
-        entry: {
+        entries: [{
           exchange: 'binance',
           market: 'BTC/USDT',
-          type: chance.pickone(Object.values(Order.types)),
+          type: OrderOptions.types.LIMIT,
           price: chance.integer({ min: 1, max: 100 }),
           quoteQuantity: 1000.00
-        },
-        exit: [
+        }],
+        exits: [
           {
             exchange: 'binance',
             market: 'BTC/USDT',
-            type: chance.pickone([Order.types.STOP_LOSS_LIMIT, Order.types.TAKE_PROFIT_LIMIT]),
+            type: OrderOptions.types.STOP_LOSS_LIMIT,
             price: chance.integer({ min: 1, max: 100 }),
-            quoteQuantity: 1000.00
+            stopPrice: chance.integer({ min: 1, max: 100 }),
+            baseQuantity: 10
           },
           {
             exchange: 'binance',
             market: 'BTC/USDT',
-            type: chance.pickone([Order.types.STOP_LOSS_LIMIT, Order.types.TAKE_PROFIT_LIMIT]),
+            type: OrderOptions.types.TAKE_PROFIT_LIMIT,
             price: chance.integer({ min: 1, max: 100 }),
-            quoteQuantity: 1000.00
+            stopPrice: chance.integer({ min: 1, max: 100 }),
+            baseQuantity: 10
           }
         ],
         win: chance.bool(),
@@ -59,17 +61,9 @@ describe('Position Model', () => {
     })
 
     describe('id', () => {
-      it('must be a UUID', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, id: 'random-id' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('id must be a valid UUID')
+      behaviours.throwsValidationError('must be a UUID', {
+        check: () => (new Position({ ...defaultParams, id: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('id must be a valid UUID')
       })
 
       it('defaults to a UUID', () => {
@@ -80,32 +74,16 @@ describe('Position Model', () => {
     })
 
     describe('signalId', () => {
-      it('must be a UUID', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, signalId: 'random-id' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('signalId must be a valid UUID')
+      behaviours.throwsValidationError('must be a UUID', {
+        check: () => (new Position({ ...defaultParams, signalId: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('signalId must be a valid UUID')
       })
     })
 
     describe('timestamp', () => {
-      it('must be a date', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, timestamp: 'tomorrow' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('timestamp must be a Date')
+      behaviours.throwsValidationError('must be a date', {
+        check: () => (new Position({ ...defaultParams, timestamp: 'tomorrow' })),
+        expect: error => expect(error.data[0].message).to.eql('timestamp must be a Date')
       })
 
       it('defaults to current time', () => {
@@ -117,562 +95,544 @@ describe('Position Model', () => {
     })
 
     describe('exchange', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, exchange: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exchange is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Position({ ...defaultParams, exchange: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('exchange is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, exchange: chance.integer() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exchange must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new Position({ ...defaultParams, exchange: chance.integer() })),
+        expect: error => expect(error.data[0].message).to.eql('exchange must be a string')
       })
     })
 
     describe('market', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, market: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('market is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Position({ ...defaultParams, market: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('market is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, market: chance.integer() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('market must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new Position({ ...defaultParams, market: chance.integer() })),
+        expect: error => expect(error.data[0].message).to.eql('market must be a string')
       })
     })
 
     describe('status', () => {
-      it('must match', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, status: chance.string({ max: 5, aplha: true }) }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql(
-          `status must match one of ${Object.values(Position.statuses).join(', ')}`
-        )
+      behaviours.throwsValidationError('must match', {
+        check: () => (new Position({ ...defaultParams, status: chance.string({ max: 5, aplha: true }) })),
+        expect: error => expect(error.data[0].message).to.eql(`status must match one of ${Object.values(Position.statuses).join(', ')}`)
       })
 
       it('defaults to NEW', () => {
         const model = new Position({ ...defaultParams, status: undefined })
 
         expect(model.status).not.to.be.null()
-        expect(model.status).be.eql(Position.statuses.NEW)
+        expect(model.status).be.eql(Order.statuses.NEW)
       })
     })
 
     describe('type', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, type: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('type is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Position({ ...defaultParams, type: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('type is required')
       })
 
-      it('must match', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, type: chance.string({ max: 5, aplha: true }) }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql(
-          `type must match one of ${Object.values(Position.types).join(', ')}`
-        )
+      behaviours.throwsValidationError('must match', {
+        check: () => (new Position({ ...defaultParams, type: chance.string({ max: 5, aplha: true }) })),
+        expect: error => expect(error.data[0].message).to.eql(`type must match one of ${Object.values(Position.types).join(', ')}`)
       })
     })
 
-    describe('entry', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, entry: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('entry is required')
+    describe('entries', () => {
+      describe('items', () => {
+        behaviours.throwsValidationError('must be an object', {
+          check: () => (new Position({ ...defaultParams, entries: [chance.string()] })),
+          expect: error => expect(error.data[0].message).to.eql('entries[0] must be an Object')
+        })
       })
 
-      it('must be an object', () => {
-        let thrownErr = null
+      it('defaults to an empty array', () => {
+        const position = new Position({ ...defaultParams, entries: undefined })
 
-        try {
-          new Position({ ...defaultParams, entry: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('entry must be an Object')
+        expect(position.entries).to.eql([])
       })
 
       describe('props', () => {
         describe('exchange', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, exchange: undefined } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.exchange is required')
+          behaviours.throwsValidationError('is required', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], exchange: undefined }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].exchange is required')
           })
 
-          it('must be a string', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, exchange: chance.integer() } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.exchange must be a string')
+          behaviours.throwsValidationError('must be a string', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], exchange: chance.integer() }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].exchange must be a string')
           })
         })
 
         describe('market', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, market: undefined } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.market is required')
+          behaviours.throwsValidationError('is required', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], market: undefined }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].market is required')
           })
 
-          it('must be a string', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, market: chance.integer() } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.market must be a string')
+          behaviours.throwsValidationError('must be a string', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], market: chance.integer() }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].market must be a string')
           })
         })
 
         describe('type', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, type: undefined } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.type is required')
+          behaviours.throwsValidationError('is required', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], type: undefined }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].type is required')
           })
 
-          it('must match', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, type: chance.string({ max: 5, aplha: true }) } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql(
-              `entry.type must match one of ${Object.values(Order.types).join(', ')}`
-            )
-          })
-        })
-
-        describe('price', () => {
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, price: 'seventy' } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.price must be a number')
+          behaviours.throwsValidationError('must match', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], type: chance.string({ max: 5, aplha: true }) }] })),
+            expect: error => expect(error.data[0].message).to.eql(`entries[0].type must match one of ${Object.values(OrderOptions.types).join(', ')}`)
           })
 
-          it('must be greater than or equal to 0', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, price: -1 } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.price must be greater than or equal to 0')
-          })
-
-          describe('when type has LIMIT', () => {
-            it('is required', () => {
-              let thrownErr = null
-
-              try {
-                /* eslint-disable no-new */
-                new Position({ ...defaultParams, entry: { ...defaultParams.entry, type: 'LIMIT', price: undefined } })
-                /* eslint-enable no-new */
-              } catch (err) {
-                thrownErr = err
-              }
-
-              expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-              expect(thrownErr.data[0].message).to.eql('entry.price is required')
+          describe('when side is BUY and type is a STOP', () => {
+            behaviours.throwsValidationError('is not supported', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  entries: [{
+                    ...defaultParams.entries[0],
+                    side: OrderOptions.sides.BUY,
+                    type: OrderOptions.types.STOP_LOSS_LIMIT
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('entries[0].type does not support BUY')
             })
           })
 
-          describe('when type is not LIMIT', () => {
-            it('defaults to underfined', () => {
-              const model = new Position({ ...defaultParams, entry: { ...defaultParams.entry, type: 'MARKET', price: undefined } })
-
-              expect(model.entry.price).to.undefined()
-            })
-          })
-        })
-
-        describe('entry.baseQuantity', () => {
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, baseQuantity: 'seventy' } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.baseQuantity must be a number')
-          })
-
-          it('must be greater than or equal to 0', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, baseQuantity: -1 } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.baseQuantity must be greater than or equal to 0')
-          })
-
-          it('requires either baseQuantity or quoteQuantity but not both', () => {
-            let noneErr = null
-            let bothErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, baseQuantity: undefined, quoteQuantity: undefined } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              noneErr = err
-            }
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, baseQuantity: 1, quoteQuantity: 1 } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              bothErr = err
-            }
-
-            expect(noneErr.type).to.eql('VALIDATION_ERROR')
-            expect(noneErr.data[0].message).to.eql('entry.baseQuantity or entry.quoteQuantity is required')
-            expect(bothErr.type).to.eql('VALIDATION_ERROR')
-            expect(bothErr.data[0].message).to.eql('entry.baseQuantity or entry.quoteQuantity is required')
-          })
-        })
-
-        describe('entry.quoteQuantity', () => {
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, quoteQuantity: 'seventy' } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.quoteQuantity must be a number')
-          })
-
-          it('must be greater than or equal to 0', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, entry: { ...defaultParams.entry, quoteQuantity: -1 } })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('entry.quoteQuantity must be greater than or equal to 0')
-          })
-        })
-      })
-    })
-
-    describe('exit', () => {
-      it('must be an array of objects', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, exit: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exit[0] must be an Object')
-      })
-
-      it('defaults to an array empty', () => {
-        const position = new Position({ ...defaultParams, exit: undefined })
-
-        expect(position.exit).to.eql([])
-      })
-
-      describe('props', () => {
-        describe('exchange', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], exchange: undefined }] }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('exit[0].exchange is required')
-          })
-
-          it('must be a string', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], exchange: chance.integer() }] }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('exit[0].exchange must be a string')
-          })
-        })
-
-        describe('market', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], market: undefined }] }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('exit[0].market is required')
-          })
-
-          it('must be a string', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], market: chance.integer() }] }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('exit[0].market must be a string')
-          })
-        })
-
-        describe('type', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], type: undefined }] })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('exit[0].type is required')
-          })
-
-          it('must match', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], type: chance.string({ max: 5, aplha: true }) }] })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql(
-              `exit[0].type must match one of ${Object.values(Order.types).join(', ')}`
-            )
-          })
-        })
-
-        describe('price', () => {
-          describe('when type has LIMIT', () => {
-            it('is required', () => {
-              let thrownErr = null
-
-              try {
-                /* eslint-disable no-new */
-                new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], type: 'LIMIT', price: undefined }] })
-                /* eslint-enable no-new */
-              } catch (err) {
-                thrownErr = err
-              }
-
-              expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-              expect(thrownErr.data[0].message).to.eql('exit[0].price is required')
-            })
-          })
-
-          describe('when type does not have LIMIT', () => {
-            it('defaults to underfined', () => {
-              const model = new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], type: 'MARKET', price: undefined }] })
-
-              expect(model.exit.price).to.undefined()
+          describe('when side is BUY and type is a TAKE PROFIT', () => {
+            behaviours.throwsValidationError('is not supported', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  entries: [{
+                    ...defaultParams.entries[0],
+                    side: OrderOptions.sides.BUY,
+                    type: OrderOptions.types.TAKE_PROFIT
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('entries[0].type does not support BUY')
             })
           })
         })
 
         describe('baseQuantity', () => {
-          it('requires either baseQuantity or quoteQuantity but not both', () => {
-            let noneErr = null
-            let bothErr = null
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], baseQuantity: 'seventy' }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].baseQuantity must be a number')
+          })
 
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], baseQuantity: undefined, quoteQuantity: undefined }] })
-              /* eslint-enable no-new */
-            } catch (err) {
-              noneErr = err
-            }
+          behaviours.throwsValidationError('must be greater than or equal to 0', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], baseQuantity: -1 }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].baseQuantity must be greater than or equal to 0')
+          })
 
-            try {
-              /* eslint-disable no-new */
-              new Position({ ...defaultParams, exit: [{ ...defaultParams.exit[0], baseQuantity: 1, quoteQuantity: 1 }] })
-              /* eslint-enable no-new */
-            } catch (err) {
-              bothErr = err
-            }
+          describe('when type is MARKET', () => {
+            describe('and neither baseQuantity or quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    entries: [{
+                      ...defaultParams.entries[0],
+                      type: OrderOptions.types.MARKET,
+                      baseQuantity: undefined,
+                      quoteQuantity: undefined
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('entries[0].baseQuantity or entries[0].quoteQuantity is required')
+              })
+            })
 
-            expect(noneErr.type).to.eql('VALIDATION_ERROR')
-            expect(noneErr.data[0].message).to.eql('exit[0].baseQuantity or exit[0].quoteQuantity is required')
-            expect(bothErr.type).to.eql('VALIDATION_ERROR')
-            expect(bothErr.data[0].message).to.eql('exit[0].baseQuantity or exit[0].quoteQuantity is required')
+            describe('and both baseQuantity and quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    entries: [{
+                      ...defaultParams.entries[0],
+                      type: OrderOptions.types.MARKET,
+                      baseQuantity: 100,
+                      quoteQuantity: 100
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('entries[0].baseQuantity or entries[0].quoteQuantity is required')
+              })
+            })
+          })
+
+          describe('when type is LIMIT', () => {
+            describe('and neither baseQuantity or quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    entries: [{
+                      ...defaultParams.entries[0],
+                      type: OrderOptions.types.LIMIT,
+                      side: OrderOptions.sides.BUY,
+                      baseQuantity: undefined,
+                      quoteQuantity: undefined
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('entries[0].baseQuantity or entries[0].quoteQuantity is required')
+              })
+            })
+
+            describe('and both baseQuantity and quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    entries: [{
+                      ...defaultParams.entries[0],
+                      type: OrderOptions.types.LIMIT,
+                      side: OrderOptions.sides.SELL,
+                      baseQuantity: 100,
+                      quoteQuantity: 100
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('entries[0].baseQuantity or entries[0].quoteQuantity is required')
+              })
+            })
+          })
+
+          describe('when type is not MARKET or LIMIT', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  entries: [{
+                    ...defaultParams.entries[0],
+                    type: OrderOptions.types.STOP_LOSS_LIMIT,
+                    side: OrderOptions.sides.SELL,
+                    baseQuantity: undefined,
+                    quoteQuantity: undefined
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('entries[0].baseQuantity is required')
+            })
+          })
+        })
+
+        describe('quoteQuantity', () => {
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], quoteQuantity: 'seventy' }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].quoteQuantity must be a number')
+          })
+
+          behaviours.throwsValidationError('must be greater than or equal to 0', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], quoteQuantity: -1 }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].quoteQuantity must be greater than or equal to 0')
+          })
+        })
+
+        describe('price', () => {
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], price: 'seventy' }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].price must be a number')
+          })
+
+          behaviours.throwsValidationError('must be greater than or equal to 0', {
+            check: () => (new Position({ ...defaultParams, entries: [{ ...defaultParams.entries[0], price: -1 }] })),
+            expect: error => expect(error.data[0].message).to.eql('entries[0].price must be greater than or equal to 0')
+          })
+
+          describe('when type has LIMIT', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  entries: [{
+                    ...defaultParams.entries[0],
+                    type: OrderOptions.types.STOP_LOSS_LIMIT,
+                    side: OrderOptions.sides.SELL,
+                    baseQuantity: 100,
+                    quoteQuantity: undefined,
+                    price: undefined
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('entries[0].price is required')
+            })
+          })
+        })
+      })
+    })
+
+    describe('exits', () => {
+      behaviours.throwsValidationError('must be an array', {
+        check: () => (new Position({ ...defaultParams, exits: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('exits[0] must be an Object')
+      })
+
+      describe('items', () => {
+        behaviours.throwsValidationError('must be an object', {
+          check: () => (new Position({ ...defaultParams, exits: [chance.string()] })),
+          expect: error => expect(error.data[0].message).to.eql('exits[0] must be an Object')
+        })
+      })
+
+      it('defaults to an empty array', () => {
+        const position = new Position({ ...defaultParams, exits: undefined })
+
+        expect(position.exits).to.eql([])
+      })
+
+      describe('props', () => {
+        describe('exchange', () => {
+          behaviours.throwsValidationError('is required', {
+            check: () => (new Position({ ...defaultParams, exits: [{ ...defaultParams.exits[0], exchange: undefined }] })),
+            expect: error => expect(error.data[0].message).to.eql('exits[0].exchange is required')
+          })
+
+          behaviours.throwsValidationError('must be a string', {
+            check: () => (new Position({ ...defaultParams, exits: [{ ...defaultParams.exits[0], exchange: chance.integer() }] })),
+            expect: error => expect(error.data[0].message).to.eql('exits[0].exchange must be a string')
+          })
+        })
+
+        describe('market', () => {
+          behaviours.throwsValidationError('is required', {
+            check: () => (new Position({ ...defaultParams, exits: [{ ...defaultParams.exits[0], market: undefined }] })),
+            expect: error => expect(error.data[0].message).to.eql('exits[0].market is required')
+          })
+
+          behaviours.throwsValidationError('must be a string', {
+            check: () => (new Position({ ...defaultParams, exits: [{ ...defaultParams.exits[0], market: chance.integer() }] })),
+            expect: error => expect(error.data[0].message).to.eql('exits[0].market must be a string')
+          })
+        })
+
+        describe('type', () => {
+          behaviours.throwsValidationError('is required', {
+            check: () => (new Position({ ...defaultParams, exits: [{ ...defaultParams.exits[0], type: undefined }] })),
+            expect: error => expect(error.data[0].message).to.eql('exits[0].type is required')
+          })
+
+          behaviours.throwsValidationError('must match', {
+            check: () => (new Position({ ...defaultParams, exits: [{ ...defaultParams.exits[0], type: chance.string({ max: 5, aplha: true }) }] })),
+            expect: error => expect(error.data[0].message).to.eql(`exits[0].type must match one of ${Object.values(OrderOptions.types).join(', ')}`)
+          })
+
+          describe('when side is BUY and type is a STOP', () => {
+            behaviours.throwsValidationError('is not supported', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  exits: [{
+                    ...defaultParams.exits[0],
+                    side: OrderOptions.sides.BUY,
+                    type: OrderOptions.types.STOP_LOSS_LIMIT
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('exits[0].type does not support BUY')
+            })
+          })
+
+          describe('when side is BUY and type is a TAKE PROFIT', () => {
+            behaviours.throwsValidationError('is not supported', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  exits: [{
+                    ...defaultParams.exits[0],
+                    side: OrderOptions.sides.BUY,
+                    type: OrderOptions.types.TAKE_PROFIT
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('exits[0].type does not support BUY')
+            })
+          })
+        })
+
+        describe('baseQuantity', () => {
+          describe('when type is MARKET', () => {
+            describe('and neither baseQuantity or quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    exits: [{
+                      ...defaultParams.exits[0],
+                      type: OrderOptions.types.MARKET,
+                      baseQuantity: undefined,
+                      quoteQuantity: undefined
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('exits[0].baseQuantity or exits[0].quoteQuantity is required')
+              })
+            })
+
+            describe('and both baseQuantity and quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    exits: [{
+                      ...defaultParams.exits[0],
+                      type: OrderOptions.types.MARKET,
+                      baseQuantity: 100,
+                      quoteQuantity: 100
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('exits[0].baseQuantity or exits[0].quoteQuantity is required')
+              })
+            })
+          })
+
+          describe('when type is LIMIT', () => {
+            describe('and neither baseQuantity or quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    exits: [{
+                      ...defaultParams.exits[0],
+                      type: OrderOptions.types.LIMIT,
+                      side: OrderOptions.sides.BUY,
+                      baseQuantity: undefined,
+                      quoteQuantity: undefined
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('exits[0].baseQuantity or exits[0].quoteQuantity is required')
+              })
+            })
+
+            describe('and both baseQuantity and quoteQuantity are provided', () => {
+              behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                check: () => (
+                  new Position({
+                    ...defaultParams,
+                    exits: [{
+                      ...defaultParams.exits[0],
+                      type: OrderOptions.types.LIMIT,
+                      side: OrderOptions.sides.SELL,
+                      baseQuantity: 100,
+                      quoteQuantity: 100
+                    }]
+                  })
+                ),
+                expect: error => expect(error.data[0].message).to.eql('exits[0].baseQuantity or exits[0].quoteQuantity is required')
+              })
+            })
+          })
+
+          describe('when type is not MARKET or LIMIT', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  exits: [{
+                    ...defaultParams.exits[0],
+                    type: OrderOptions.types.STOP_LOSS_LIMIT,
+                    side: OrderOptions.sides.SELL,
+                    baseQuantity: undefined,
+                    quoteQuantity: undefined
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('exits[0].baseQuantity is required')
+            })
+          })
+        })
+
+        describe('price', () => {
+          describe('when type has LIMIT', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  exits: [{
+                    ...defaultParams.exits[0],
+                    type: OrderOptions.types.STOP_LOSS_LIMIT,
+                    side: OrderOptions.sides.SELL,
+                    baseQuantity: 100,
+                    quoteQuantity: undefined,
+                    price: undefined
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('exits[0].price is required')
+            })
+          })
+        })
+
+        describe('stopPrice', () => {
+          describe('when type is MARKET', () => {
+            it('defaults to underfined', () => {
+              const model = new Position({ ...defaultParams, exit: { ...defaultParams.exits[0], type: 'MARKET', stopPrice: undefined } })
+
+              expect(model.exit.stopPrice).to.undefined()
+            })
+          })
+
+          describe('when type has STOP_LOSS', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  exits: [{
+                    ...defaultParams.exits[0],
+                    type: OrderOptions.types.STOP_LOSS_LIMIT,
+                    side: OrderOptions.sides.SELL,
+                    baseQuantity: 100,
+                    quoteQuantity: undefined,
+                    stopPrice: undefined
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('exits[0].stopPrice is required')
+            })
+          })
+
+          describe('when type has TAKE_PROFIT', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (
+                new Position({
+                  ...defaultParams,
+                  exits: [{
+                    ...defaultParams.exits[0],
+                    type: OrderOptions.types.TAKE_PROFIT,
+                    side: OrderOptions.sides.SELL,
+                    baseQuantity: 100,
+                    quoteQuantity: undefined,
+                    stopPrice: undefined
+                  }]
+                })
+              ),
+              expect: error => expect(error.data[0].message).to.eql('exits[0].stopPrice is required')
+            })
           })
         })
       })
     })
 
     describe('win', () => {
-      it('must be a boolean', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, win: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('win must be a boolean')
+      behaviours.throwsValidationError('must be a boolean', {
+        check: () => (new Position({ ...defaultParams, win: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('win must be a boolean')
       })
 
       it('defaults to null', () => {
@@ -683,17 +643,9 @@ describe('Position Model', () => {
     })
 
     describe('realizedPnL', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, realizedPnL: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('realizedPnL must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Position({ ...defaultParams, realizedPnL: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('realizedPnL must be a number')
       })
 
       it('defaults to 0', () => {
@@ -705,17 +657,9 @@ describe('Position Model', () => {
     })
 
     describe('realizedPnLPercent', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, realizedPnLPercent: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('realizedPnLPercent must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Position({ ...defaultParams, realizedPnLPercent: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('realizedPnLPercent must be a number')
       })
 
       it('defaults to 0', () => {
@@ -727,17 +671,9 @@ describe('Position Model', () => {
     })
 
     describe('unrealizedPnL', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, unrealizedPnL: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('unrealizedPnL must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Position({ ...defaultParams, unrealizedPnL: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('unrealizedPnL must be a number')
       })
 
       it('defaults to 0', () => {
@@ -749,17 +685,9 @@ describe('Position Model', () => {
     })
 
     describe('unrealizedPnLPercent', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, unrealizedPnLPercent: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('unrealizedPnLPercent must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Position({ ...defaultParams, unrealizedPnLPercent: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('unrealizedPnLPercent must be a number')
       })
 
       it('defaults to 0', () => {
@@ -771,17 +699,9 @@ describe('Position Model', () => {
     })
 
     describe('pnl', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, pnl: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('pnl must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Position({ ...defaultParams, pnl: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('pnl must be a number')
       })
 
       it('defaults to 0', () => {
@@ -793,17 +713,9 @@ describe('Position Model', () => {
     })
 
     describe('pnlPercent', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, pnlPercent: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('pnlPercent must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new Position({ ...defaultParams, pnlPercent: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('pnlPercent must be a number')
       })
 
       it('defaults to 0', () => {
@@ -815,31 +727,15 @@ describe('Position Model', () => {
     })
 
     describe('orders', () => {
-      it('must be an array', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, orders: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('orders must be an array')
+      behaviours.throwsValidationError('must be an array', {
+        check: () => (new Position({ ...defaultParams, orders: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('orders must be an array')
       })
 
       describe('items', () => {
-        it('must be an instance of Order', () => {
-          let thrownErr = null
-
-          try {
-            new Position({ ...defaultParams, orders: [{ side: 'BUY' }] }) /* eslint-disable-line no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('orders[0] must be an instance of the Order class')
+        behaviours.throwsValidationError('must be an instance of Order class', {
+          check: () => (new Position({ ...defaultParams, orders: [{ side: 'BUY' }] })),
+          expect: error => expect(error.data[0].message).to.eql('orders[0] must be an instance of the Order class')
         })
       })
 
@@ -852,17 +748,9 @@ describe('Position Model', () => {
     })
 
     describe('statistics', () => {
-      it('must be an Object', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, statistics: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('statistics must be an Object')
+      behaviours.throwsValidationError('must be an Object', {
+        check: () => (new Position({ ...defaultParams, statistics: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('statistics must be an Object')
       })
 
       it('defaults to an empty Object', () => {
@@ -874,34 +762,18 @@ describe('Position Model', () => {
 
       describe('props', () => {
         describe('duration', () => {
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              new Position({ ...defaultParams, statistics: { duration: chance.string() } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('statistics.duration must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Position({ ...defaultParams, statistics: { duration: chance.string() } })),
+            expect: error => expect(error.data[0].message).to.eql('statistics.duration must be a number')
           })
         })
       })
     })
 
     describe('createdAt', () => {
-      it('must be a date', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, createdAt: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('createdAt must be a Date')
+      behaviours.throwsValidationError('must be a date', {
+        check: () => (new Position({ ...defaultParams, createdAt: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('createdAt must be a Date')
       })
 
       it('defaults to the current time', () => {
@@ -913,17 +785,9 @@ describe('Position Model', () => {
     })
 
     describe('closedAt', () => {
-      it('must be a date', () => {
-        let thrownErr = null
-
-        try {
-          new Position({ ...defaultParams, closedAt: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('closedAt must be a Date')
+      behaviours.throwsValidationError('must be a date', {
+        check: () => (new Position({ ...defaultParams, closedAt: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('closedAt must be a Date')
       })
 
       describe('when status is CLOSED', () => {
@@ -971,8 +835,22 @@ describe('Position Model', () => {
     describe('when type is LONG', () => {
       it('returns all BUY orders that have been filled', () => {
         const position = Factory('position').build({ type: Position.types.LONG })
-        const buyOrder = Factory('exchangeOrder').build({ side: Order.sides.BUY, status: Order.statuses.FILLED, baseQuantity: 100 })
-        const sellOrder = Factory('exchangeOrder').build({ side: Order.sides.SELL, status: Order.statuses.FILLED, baseQuantity: 100 })
+
+        const buyOrder = Factory('exchangeOrder').build({
+          type: OrderOptions.types.MARKET,
+          side: OrderOptions.sides.BUY,
+          status: Order.statuses.FILLED,
+          baseQuantity: 100,
+          quoteQuantity: undefined
+        })
+
+        const sellOrder = Factory('exchangeOrder').build({
+          side: OrderOptions.sides.SELL,
+          status: Order.statuses.FILLED,
+          baseQuantity: 100,
+          quoteQuantity: undefined
+        })
+
         const orders = [
           Factory('orderFromExchangeOrder').build(buyOrder),
           Factory('orderFromExchangeOrder').build(sellOrder)
@@ -991,8 +869,8 @@ describe('Position Model', () => {
     describe('when type is LONG', () => {
       it('returns all SELL orders that have been filled', () => {
         const position = Factory('position').build({ type: Position.types.LONG })
-        const buyOrder = Factory('exchangeOrder').build({ side: Order.sides.BUY, status: Order.statuses.FILLED, baseQuantity: 100 })
-        const sellOrder = Factory('exchangeOrder').build({ side: Order.sides.SELL, status: Order.statuses.FILLED, baseQuantity: 100 })
+        const buyOrder = Factory('exchangeOrder').build({ side: OrderOptions.sides.BUY, status: Order.statuses.FILLED, baseQuantity: 100 })
+        const sellOrder = Factory('exchangeOrder').build({ side: OrderOptions.sides.SELL, status: Order.statuses.FILLED, baseQuantity: 100 })
         const orders = [
           Factory('orderFromExchangeOrder').build(buyOrder),
           Factory('orderFromExchangeOrder').build(sellOrder)

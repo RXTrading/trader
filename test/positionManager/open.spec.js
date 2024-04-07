@@ -1,60 +1,47 @@
-const { expect, Factory, BigNumber, sinon, chance } = require('../helpers')
+const { expect, Factory, behaviours, BigNumber, sinon, chance } = require('../helpers')
 
 const PositionManager = require('../../lib/positionManager')
-const { Balance, Position, Order } = require('../../lib/models')
+const { Balance, Position, Order, OrderOptions } = require('../../lib/models')
 const Exchange = require('../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
   describe('#open', () => {
     describe('when position is invalid', () => {
-      it('throws an error', async () => {
-        const manager = new PositionManager({ trader: { on: () => {} } })
+      behaviours.throwsValidationError('throws an error', {
+        check: () => {
+          const manager = new PositionManager({ trader: { on: () => {} } })
 
-        let thrownErr = null
-
-        try {
-          await manager.open()
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exchange is required')
+          return manager.open()
+        },
+        expect: error => expect(error.data[0].message).to.eql('exchange is required')
       })
     })
 
     describe('when position is valid', () => {
       const positionParams = {
-        exchange: 'binance',
-        market: 'BTC/USDT',
         type: Position.types.LONG,
-        entry: {
+        entries: [{
           exchange: 'binance',
           market: 'BTC/USDT',
-          type: Order.types.LIMIT,
+          type: OrderOptions.types.LIMIT,
           price: chance.integer({ min: 1, max: 100 }),
           quoteQuantity: 1000.00
-        }
+        }]
       }
 
       describe('and creating entry order fails', () => {
-        it('throws an error', async () => {
-          const manager = new PositionManager({
-            trader: {
-              on: () => {},
-              exchange: { createOrder: () => { throw new Error('createOrder error') } }
-            }
-          })
+        behaviours.throws('throws error', undefined, {
+          check: () => {
+            const manager = new PositionManager({
+              trader: {
+                on: () => {},
+                exchange: { createOrder: () => { throw new Error('createOrder error') } }
+              }
+            })
 
-          let thrownErr = null
-
-          try {
-            await manager.open({ ...positionParams })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.message).to.eql('createOrder error')
+            return manager.open({ ...positionParams })
+          },
+          expect: error => expect(error.message).to.eql('createOrder error')
         })
       })
 
@@ -90,9 +77,9 @@ describe('PositionManager', () => {
           const order = manager.all[0].orders[0]
 
           expect(order.status).to.eql(Order.statuses.OPEN)
-          expect(order.side).to.eql(Order.sides.BUY)
-          expect(order.type).to.eql(Order.types.LIMIT)
-          expect(order.price).to.eql(BigNumber(positionParams.entry.price).toFixed())
+          expect(order.side).to.eql(OrderOptions.sides.BUY)
+          expect(order.type).to.eql(OrderOptions.types.LIMIT)
+          expect(order.price).to.eql(BigNumber(positionParams.entries[0].price).toFixed())
         })
 
         it('emits position.opened with position', async () => {

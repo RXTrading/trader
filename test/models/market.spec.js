@@ -1,4 +1,4 @@
-const { expect, chance, BigNumber } = require('../helpers')
+const { expect, chance, BigNumber, behaviours } = require('../helpers')
 
 const Market = require('../../lib/models/market')
 
@@ -26,129 +26,57 @@ describe('Market Model', () => {
     }
 
     describe('symbol', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, symbol: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('symbol is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Market({ ...defaultParams, symbol: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('symbol is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, symbol: chance.bool() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('symbol must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new Market({ ...defaultParams, symbol: chance.bool() })),
+        expect: error => expect(error.data[0].message).to.eql('symbol must be a string')
       })
     })
 
     describe('base', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, base: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('base is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Market({ ...defaultParams, base: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('base is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, base: chance.bool() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('base must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new Market({ ...defaultParams, base: chance.bool() })),
+        expect: error => expect(error.data[0].message).to.eql('base must be a string')
       })
     })
 
     describe('quote', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, quote: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quote is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new Market({ ...defaultParams, quote: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('quote is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, quote: chance.bool() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quote must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new Market({ ...defaultParams, quote: chance.bool() })),
+        expect: error => expect(error.data[0].message).to.eql('quote must be a string')
       })
     })
 
     describe('fees', () => {
-      it('must be an object', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, fees: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('fees must be an Object')
+      behaviours.throwsValidationError('must be an object', {
+        check: () => (new Market({ ...defaultParams, fees: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('fees must be an Object')
       })
 
       describe('props', () => {
         describe('maker', () => {
-          it('it must be a number', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, fees: { maker: 'twenty' } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('fees.maker must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Market({ ...defaultParams, fees: { maker: 'twenty' } })),
+            expect: error => expect(error.data[0].message).to.eql('fees.maker must be a number')
           })
 
-          it('must be greater than 0', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, fees: { maker: -1 } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('fees.maker must be greater than or equal to 0')
+          behaviours.throwsValidationError('must be greater than 0', {
+            check: () => (new Market({ ...defaultParams, fees: { maker: -1 } })),
+            expect: error => expect(error.data[0].message).to.eql('fees.maker must be greater than or equal to 0')
           })
 
           it('converts to BigNumber', () => {
@@ -165,30 +93,14 @@ describe('Market Model', () => {
         })
 
         describe('taker', () => {
-          it('it must be a number', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, fees: { taker: 'twenty' } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('fees.taker must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Market({ ...defaultParams, fees: { taker: 'twenty' } })),
+            expect: error => expect(error.data[0].message).to.eql('fees.taker must be a number')
           })
 
-          it('must be greater than 0', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, fees: { taker: -1 } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('fees.taker must be greater than or equal to 0')
+          behaviours.throwsValidationError('must be greater than 0', {
+            check: () => (new Market({ ...defaultParams, fees: { taker: -1 } })),
+            expect: error => expect(error.data[0].message).to.eql('fees.taker must be greater than or equal to 0')
           })
 
           it('converts to BigNumber', () => {
@@ -207,45 +119,21 @@ describe('Market Model', () => {
     })
 
     describe('precision', () => {
-      it('must be an object', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, precision: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('precision must be an Object')
+      behaviours.throwsValidationError('must be an object', {
+        check: () => (new Market({ ...defaultParams, precision: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('precision must be an Object')
       })
 
       describe('props', () => {
         describe('base', () => {
-          it('it must be a number', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { base: 'twenty' } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.base must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Market({ ...defaultParams, precision: { base: 'twenty' } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.base must be a number')
           })
 
-          it('must be greater than 0', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { base: -1 } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.base must be greater than or equal to 0')
+          behaviours.throwsValidationError('must be greater than 0', {
+            check: () => (new Market({ ...defaultParams, precision: { base: -1 } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.base must be greater than or equal to 0')
           })
 
           it('defaults to 8', () => {
@@ -256,30 +144,14 @@ describe('Market Model', () => {
         })
 
         describe('price', () => {
-          it('it must be a number', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { price: 'twenty' } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.price must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Market({ ...defaultParams, precision: { price: 'twenty' } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.price must be a number')
           })
 
-          it('must be greater than 0', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { price: -1 } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.price must be greater than or equal to 0')
+          behaviours.throwsValidationError('must be greater than 0', {
+            check: () => (new Market({ ...defaultParams, precision: { price: -1 } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.price must be greater than or equal to 0')
           })
 
           it('defaults to 2', () => {
@@ -290,30 +162,14 @@ describe('Market Model', () => {
         })
 
         describe('quote', () => {
-          it('it must be a number', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { quote: 'twenty' } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.quote must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Market({ ...defaultParams, precision: { quote: 'twenty' } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.quote must be a number')
           })
 
-          it('must be greater than 0', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { quote: -1 } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.quote must be greater than or equal to 0')
+          behaviours.throwsValidationError('must be greater than 0', {
+            check: () => (new Market({ ...defaultParams, precision: { quote: -1 } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.quote must be greater than or equal to 0')
           })
 
           it('defaults to 8', () => {
@@ -324,30 +180,14 @@ describe('Market Model', () => {
         })
 
         describe('amount', () => {
-          it('it must be a number', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { amount: 'twenty' } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.amount must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => (new Market({ ...defaultParams, precision: { amount: 'twenty' } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.amount must be a number')
           })
 
-          it('must be greater than 0', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, precision: { amount: -1 } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('precision.amount must be greater than or equal to 0')
+          behaviours.throwsValidationError('must be greater than 0', {
+            check: () => (new Market({ ...defaultParams, precision: { amount: -1 } })),
+            expect: error => expect(error.data[0].message).to.eql('precision.amount must be greater than or equal to 0')
           })
 
           it('defaults to 5', () => {
@@ -360,60 +200,28 @@ describe('Market Model', () => {
     })
 
     describe('limits', () => {
-      it('must be an object', () => {
-        let thrownErr = null
-
-        try {
-          new Market({ ...defaultParams, limits: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('limits must be an Object')
+      behaviours.throwsValidationError('must be an object', {
+        check: () => (new Market({ ...defaultParams, limits: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('limits must be an Object')
       })
 
       describe('props', () => {
         describe('amount', () => {
-          it('must be an object', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, limits: { amount: chance.string() } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('limits.amount must be an Object')
+          behaviours.throwsValidationError('must be an object', {
+            check: () => (new Market({ ...defaultParams, limits: { amount: chance.string() } })),
+            expect: error => expect(error.data[0].message).to.eql('limits.amount must be an Object')
           })
 
           describe('props', () => {
             describe('min', () => {
-              it('it must be a number', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { amount: { min: 'twenty' } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.amount.min must be a number')
+              behaviours.throwsValidationError('must be a number', {
+                check: () => (new Market({ ...defaultParams, limits: { amount: { min: 'twenty' } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.amount.min must be a number')
               })
 
-              it('must be greater than 0', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { amount: { min: -1 } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.amount.min must be greater than or equal to 0')
+              behaviours.throwsValidationError('must be greater than 0', {
+                check: () => (new Market({ ...defaultParams, limits: { amount: { min: -1 } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.amount.min must be greater than or equal to 0')
               })
 
               it('converts to BigNumber', () => {
@@ -430,30 +238,14 @@ describe('Market Model', () => {
             })
 
             describe('max', () => {
-              it('it must be a number', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { amount: { max: 'twenty' } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.amount.max must be a number')
+              behaviours.throwsValidationError('must be a number', {
+                check: () => (new Market({ ...defaultParams, limits: { amount: { max: 'twenty' } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.amount.max must be a number')
               })
 
-              it('must be greater than 0', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { amount: { max: -1 } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.amount.max must be greater than or equal to 0')
+              behaviours.throwsValidationError('must be greater than 0', {
+                check: () => (new Market({ ...defaultParams, limits: { amount: { max: -1 } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.amount.max must be greater than or equal to 0')
               })
 
               it('converts to BigNumber', () => {
@@ -472,45 +264,21 @@ describe('Market Model', () => {
         })
 
         describe('cost', () => {
-          it('must be an object', () => {
-            let thrownErr = null
-
-            try {
-              new Market({ ...defaultParams, limits: { cost: chance.string() } }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('limits.cost must be an Object')
+          behaviours.throwsValidationError('must be an object', {
+            check: () => (new Market({ ...defaultParams, limits: { cost: chance.string() } })),
+            expect: error => expect(error.data[0].message).to.eql('limits.cost must be an Object')
           })
 
           describe('props', () => {
             describe('min', () => {
-              it('it must be a number', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { cost: { min: 'twenty' } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.cost.min must be a number')
+              behaviours.throwsValidationError('must be a number', {
+                check: () => (new Market({ ...defaultParams, limits: { cost: { min: 'twenty' } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.cost.min must be a number')
               })
 
-              it('must be greater than 0', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { cost: { min: -1 } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.cost.min must be greater than or equal to 0')
+              behaviours.throwsValidationError('must be greater than 0', {
+                check: () => (new Market({ ...defaultParams, limits: { cost: { min: -1 } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.cost.min must be greater than or equal to 0')
               })
 
               it('converts to BigNumber', () => {
@@ -527,30 +295,14 @@ describe('Market Model', () => {
             })
 
             describe('max', () => {
-              it('it must be a number', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { cost: { max: 'twenty' } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.cost.max must be a number')
+              behaviours.throwsValidationError('must be a number', {
+                check: () => (new Market({ ...defaultParams, limits: { cost: { max: 'twenty' } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.cost.max must be a number')
               })
 
-              it('must be greater than 0', () => {
-                let thrownErr = null
-
-                try {
-                  new Market({ ...defaultParams, limits: { cost: { max: -1 } } }) /* eslint-disable-line no-new */
-                } catch (err) {
-                  thrownErr = err
-                }
-
-                expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-                expect(thrownErr.data[0].message).to.eql('limits.cost.max must be greater than or equal to 0')
+              behaviours.throwsValidationError('must be greater than 0', {
+                check: () => (new Market({ ...defaultParams, limits: { cost: { max: -1 } } })),
+                expect: error => expect(error.data[0].message).to.eql('limits.cost.max must be greater than or equal to 0')
               })
 
               it('converts to BigNumber', () => {

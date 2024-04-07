@@ -1,7 +1,7 @@
-const { expect, Factory, chance, BigNumber } = require('../../../helpers')
+const { expect, Factory, behaviours, chance, BigNumber } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
-const { ExchangeOrder, Market, Balance } = require('../../../../lib/models')
+const { ExchangeOrder, OrderOptions, Market, Balance } = require('../../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   describe('#createOrder when type is LIMIT', () => {
@@ -17,10 +17,9 @@ describe('Exchanges: Simulation', () => {
       const orderOptions = {
         exchange: 'binance',
         market: market.symbol,
-        side: ExchangeOrder.sides.BUY,
-        type: ExchangeOrder.types.LIMIT,
+        side: OrderOptions.sides.BUY,
+        type: OrderOptions.types.LIMIT,
         price: 10,
-        baseQuantity: 10,
         quoteQuantity: 100
       }
 
@@ -71,7 +70,7 @@ describe('Exchanges: Simulation', () => {
 
           expect(exchange.getBalance(market.base)).to.deep.include({ free: '1000', used: '0' })
 
-          exchange.createOrder({ ...orderOptions, side: ExchangeOrder.sides.SELL, baseQuantity, quoteQuantity })
+          exchange.createOrder({ ...orderOptions, side: OrderOptions.sides.SELL, quoteQuantity })
 
           const expectedUsed = BigNumber(baseQuantity).toFixed()
 
@@ -94,24 +93,18 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
       })
 
-      it('throws an error', () => {
-        let thrownErr = null
-
-        try {
+      behaviours.throwsValidationError('throws an error', {
+        check: () => {
           exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.LIMIT,
             price: 10000,
             baseQuantity: 0.001
           })
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantity is lower than exchange minimum amount')
+        },
+        expect: error => expect(error.data[0].message).to.eql('baseQuantity is lower than exchange minimum amount')
       })
     })
 
@@ -128,24 +121,18 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
       })
 
-      it('throws an error', () => {
-        let thrownErr = null
-
-        try {
+      behaviours.throwsValidationError('throws an error', {
+        check: () => {
           exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.BUY,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.BUY,
+            type: OrderOptions.types.LIMIT,
             price: 1,
             quoteQuantity: 100
           })
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantity is greater than exchange maximum amount')
+        },
+        expect: error => expect(error.data[0].message).to.eql('baseQuantity is greater than exchange maximum amount')
       })
     })
 
@@ -162,24 +149,18 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
       })
 
-      it('throws an error', () => {
-        let thrownErr = null
-
-        try {
+      behaviours.throwsValidationError('throws an error', {
+        check: () => {
           exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.BUY,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.BUY,
+            type: OrderOptions.types.LIMIT,
             price: 1,
             quoteQuantity: 1
           })
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantity is lower than exchange minimum cost')
+        },
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantity is lower than exchange minimum cost')
       })
     })
 
@@ -201,24 +182,18 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
       })
 
-      it('throws an error', () => {
-        let thrownErr = null
-
-        try {
+      behaviours.throwsValidationError('throws an error', {
+        check: () => {
           exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.BUY,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.BUY,
+            type: OrderOptions.types.LIMIT,
             price: 1,
             quoteQuantity: 100
           })
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantity is greater than exchange maximum cost')
+        },
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantity is greater than exchange maximum cost')
       })
     })
   })

@@ -1,7 +1,7 @@
-const { expect, Factory, chance, BigNumber } = require('../../helpers')
+const { expect, Factory, behaviours, chance, BigNumber } = require('../../helpers')
 
 const Exchange = require('../../../lib/exchanges/simulation')
-const { ExchangeOrder } = require('../../../lib/models')
+const { ExchangeOrder, OrderOptions } = require('../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   describe('#cancelOrder', () => {
@@ -11,43 +11,19 @@ describe('Exchanges: Simulation', () => {
       const exchange = new Exchange()
 
       describe('id', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            exchange.cancelOrder()
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('id is required')
+        behaviours.throwsValidationError('is required', {
+          check: () => exchange.cancelOrder(),
+          expect: error => expect(error.data[0].message).to.eql('id is required')
         })
 
-        it('must be a UUID', () => {
-          let thrownErr = null
-
-          try {
-            exchange.cancelOrder({ id: chance.string() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('id must be a valid UUID')
+        behaviours.throwsValidationError('is required', {
+          check: () => exchange.cancelOrder({ id: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('id must be a valid UUID')
         })
 
-        it('must exist', () => {
-          let thrownErr = null
-
-          try {
-            exchange.cancelOrder({ id: chance.guid() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('order does not exist')
+        behaviours.throwsValidationError('is required', {
+          check: () => exchange.cancelOrder({ id: chance.guid() }),
+          expect: error => expect(error.data[0].message).to.eql('order does not exist')
         })
       })
     })
@@ -57,8 +33,8 @@ describe('Exchanges: Simulation', () => {
         it('unlocks quote asset', () => {
           const balances = [Factory('balance').build({ symbol: 'USDT', free: 1000, used: 200, total: 1000 })]
           const order = Factory('exchangeOrder').build({
-            type: ExchangeOrder.types.LIMIT,
-            side: ExchangeOrder.sides.BUY,
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.BUY,
             quoteQuantity: 100,
             price: chance.floating({ min: 1, max: 100 })
           })
@@ -75,8 +51,8 @@ describe('Exchanges: Simulation', () => {
         it('unlocks base asset', () => {
           const balances = [Factory('balance').build({ symbol: 'BTC', free: 100, used: 100, total: 1000 })]
           const order = Factory('exchangeOrder').build({
-            type: ExchangeOrder.types.LIMIT,
-            side: ExchangeOrder.sides.SELL,
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.SELL,
             baseQuantity: 50,
             price: chance.floating({ min: 1, max: 100 })
           })
@@ -94,8 +70,8 @@ describe('Exchanges: Simulation', () => {
         it('is set to cancelled', () => {
           const balances = [Factory('balance').build({ symbol: 'USDT', free: 1000, total: 1000 })]
           const order = Factory('exchangeOrder').build({
-            type: ExchangeOrder.types.LIMIT,
-            side: ExchangeOrder.sides.BUY,
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.BUY,
             quoteQuantity: 100,
             price: chance.floating({ min: 1, max: 100 })
           })

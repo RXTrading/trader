@@ -1,6 +1,6 @@
 const _ = require('lodash')
 
-const { ExchangeOrder } = require('../../../lib/models')
+const { ExchangeOrder, OrderOptions } = require('../../../lib/models')
 
 module.exports = Factory => {
   Factory.define('exchangeOrder', function (overrides, chance) {
@@ -9,15 +9,15 @@ module.exports = Factory => {
       status: ExchangeOrder.statuses.OPEN,
       exchange: 'binance',
       market: 'BTC/USDT',
-      side: ExchangeOrder.sides.BUY,
-      type: ExchangeOrder.types.MARKET
+      side: OrderOptions.sides.BUY,
+      type: OrderOptions.types.MARKET
     })
 
-    if (params.side === ExchangeOrder.sides.BUY && !params.quoteQuantity) {
+    if (params.side === OrderOptions.sides.BUY && !params.baseQuantity && !params.quoteQuantity) {
       params.quoteQuantity = chance.floating({ min: 10, max: 100 })
     }
 
-    if (params.side === ExchangeOrder.sides.SELL && !params.baseQuantity) {
+    if (params.side === OrderOptions.sides.SELL && !params.baseQuantity) {
       params.baseQuantity = chance.floating({ min: 10, max: 100 })
     }
 

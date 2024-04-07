@@ -1,7 +1,7 @@
-const { expect, Factory, BigNumber, chance, sinon } = require('../helpers')
+const { expect, Factory, behaviours, BigNumber, chance, sinon } = require('../helpers')
 
 const PositionManager = require('../../lib/positionManager')
-const { Balance, Position, Order } = require('../../lib/models')
+const { Balance, Position, Order, OrderOptions } = require('../../lib/models')
 const Exchange = require('../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
@@ -17,7 +17,7 @@ describe('PositionManager', () => {
       for (let i = 0; i < 3; i++) {
         const exchangeOrder = Factory('exchangeOrder').build({
           status: Order.statuses.FILLED,
-          type: Order.types.LIMIT,
+          type: OrderOptions.types.LIMIT,
           price: 10,
           averagePrice: 10,
           quoteQuantity: 1000.00,
@@ -41,7 +41,7 @@ describe('PositionManager', () => {
           entry: {
             exchange: 'binance',
             market: market.symbol,
-            type: Order.types.LIMIT,
+            type: OrderOptions.types.LIMIT,
             price: 10,
             quoteQuantity: 1000.00
           },
@@ -100,7 +100,7 @@ describe('PositionManager', () => {
           expect(position.status).to.eql(Position.statuses.CLOSING)
           expect(position.orders.length).to.eql(2)
           expect(position.orders[1].status).to.eql(Order.statuses.FILLED)
-          expect(position.orders[1].side).to.eql(Order.sides.SELL)
+          expect(position.orders[1].side).to.eql(OrderOptions.sides.SELL)
         })
 
         expect(baseBalance.free).to.eql(BigNumber(0).toFixed())
@@ -134,37 +134,32 @@ describe('PositionManager', () => {
     })
 
     describe('when closing a position fails', () => {
-      it('throws an error', async () => {
-        const exchange = new Exchange({
-          markets: [market],
-          balances: [new Balance({
-            symbol: 'BTC',
-            free: initialBaseBalance.toFixed(),
-            total: initialBaseBalance.toFixed()
-          })],
-          orders: exchangeOrders
-        })
+      behaviours.throws('throws an error', undefined, {
+        check: () => {
+          const exchange = new Exchange({
+            markets: [market],
+            balances: [new Balance({
+              symbol: 'BTC',
+              free: initialBaseBalance.toFixed(),
+              total: initialBaseBalance.toFixed()
+            })],
+            orders: exchangeOrders
+          })
 
-        const manager = new PositionManager({
-          trader: {
-            on: () => {},
-            exchange: { createOrder: () => { throw new Error('createOrder error') } }
-          },
-          positions
-        })
+          const manager = new PositionManager({
+            trader: {
+              on: () => {},
+              exchange: { createOrder: () => { throw new Error('createOrder error') } }
+            },
+            positions
+          })
 
-        exchange.setTick(200)
-        exchange.setCandle({ open: 150, high: 220, low: 100, close: 200 })
+          exchange.setTick(200)
+          exchange.setCandle({ open: 150, high: 220, low: 100, close: 200 })
 
-        let thrownErr = null
-
-        try {
-          await manager.closeAll()
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.message).to.eql('createOrder error')
+          return manager.closeAll()
+        },
+        expect: error => expect(error.message).to.eql('createOrder error')
       })
     })
   })
