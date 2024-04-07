@@ -1,9 +1,9 @@
 const _ = require('lodash')
 
-const { expect, Factory, BigNumber, sinon, chance } = require('../helpers')
+const { expect, Factory, behaviours, BigNumber, sinon, chance } = require('../helpers')
 
 const PositionManager = require('../../lib/positionManager')
-const { Balance, Position, Order, ExchangeOrder } = require('../../lib/models')
+const { Balance, Position, Order, OrderOptions } = require('../../lib/models')
 const Exchange = require('../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
@@ -18,58 +18,26 @@ describe('PositionManager', () => {
       })
 
       describe('id', () => {
-        it('is required', async () => {
-          let thrownErr = null
-
-          try {
-            await manager.close()
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('POSITION_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('id is required')
+        behaviours.throwsPositionManagerValidationError('is required', {
+          check: () => manager.close(),
+          expect: error => expect(error.data[0].message).to.eql('id is required')
         })
 
-        it('must be a UUID', async () => {
-          let thrownErr = null
-
-          try {
-            await manager.close({ id: chance.string() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('POSITION_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('id must be a valid UUID')
+        behaviours.throwsPositionManagerValidationError('must be a UUID', {
+          check: () => manager.close({ id: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('id must be a valid UUID')
         })
 
-        it('must exist', async () => {
-          let thrownErr = null
-
-          try {
-            await manager.close({ id: chance.guid() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('POSITION_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('position does not exist')
+        behaviours.throwsPositionManagerValidationError('must exist', {
+          check: () => manager.close({ id: chance.guid() }),
+          expect: error => expect(error.data[0].message).to.eql('position does not exist')
         })
       })
 
       describe('timestamp', () => {
-        it('must be a date', async () => {
-          let thrownErr = null
-
-          try {
-            await manager.close({ id: position.id, timestamp: 'tomorrow' })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('POSITION_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('timestamp must be a Date')
+        behaviours.throwsPositionManagerValidationError('is required', {
+          check: () => manager.close({ id: position.id, timestamp: 'tomorrow' }),
+          expect: error => expect(error.data[0].message).to.eql('timestamp must be a Date')
         })
       })
     })
@@ -87,7 +55,7 @@ describe('PositionManager', () => {
         beforeEach(() => {
           exchangeOrder = Factory('exchangeOrder').build({
             status: Order.statuses.FILLED,
-            type: Order.types.LIMIT,
+            type: OrderOptions.types.LIMIT,
             price: 10,
             averagePrice: 10,
             quoteQuantity: 1000.00,
@@ -126,8 +94,8 @@ describe('PositionManager', () => {
         beforeEach(() => {
           exchangeOrder = Factory('exchangeOrder').build({
             status: Order.statuses.OPEN,
-            type: ExchangeOrder.types.LIMIT,
-            side: ExchangeOrder.sides.SELL,
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.SELL,
             price: 15,
             baseQuantity: 50
           })
@@ -152,24 +120,19 @@ describe('PositionManager', () => {
         })
 
         describe('and cancelling an existing order fails', () => {
-          it('throws an error', async () => {
-            const manager = new PositionManager({
-              trader: {
-                on: () => {},
-                exchange: { cancelOrder: () => { throw new Error('cancelOrder error') } }
-              },
-              positions: [position]
-            })
+          behaviours.throws('throws an error', undefined, {
+            check: () => {
+              const manager = new PositionManager({
+                trader: {
+                  on: () => {},
+                  exchange: { cancelOrder: () => { throw new Error('cancelOrder error') } }
+                },
+                positions: [position]
+              })
 
-            let thrownErr = null
-
-            try {
-              await manager.close({ id: position.id })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.message).to.eql('cancelOrder error')
+              return manager.close({ id: position.id })
+            },
+            expect: error => expect(error.message).to.eql('cancelOrder error')
           })
         })
       })
@@ -184,12 +147,12 @@ describe('PositionManager', () => {
           const existingOrder = new Order({
             foreignId: chance.guid({ version: 4 }),
             options: {
-              ..._.pick(position.entry, ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
-              side: Order.sides.BUY
+              ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
+              side: OrderOptions.sides.BUY
             },
             status: Order.statuses.FILLED,
-            side: Order.sides.BUY,
-            ..._.pick(position.entry, ['exchange', 'market', 'type', 'price']),
+            side: OrderOptions.sides.BUY,
+            ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price']),
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
@@ -225,8 +188,8 @@ describe('PositionManager', () => {
           const feeCost = BigNumber(expectedQuoteNet).multipliedBy(market.fees.maker).toFixed()
           const expectedQuoteGross = BigNumber(expectedQuoteNet).minus(feeCost).toFixed(quotePrecision, BigNumber.ROUND_UP)
 
-          expect(sellOrder.side).to.eql(Order.sides.SELL)
-          expect(sellOrder.type).to.eql(Order.types.MARKET)
+          expect(sellOrder.side).to.eql(OrderOptions.sides.SELL)
+          expect(sellOrder.type).to.eql(OrderOptions.types.MARKET)
           expect(sellOrder.status).to.eql(Order.statuses.FILLED)
           expect(sellOrder.baseQuantityGross).to.eql(buyOrder.baseQuantityNet)
           expect(sellOrder.baseQuantityNet).to.eql(buyOrder.baseQuantityNet)
@@ -253,24 +216,19 @@ describe('PositionManager', () => {
         })
 
         describe('and creating offset order fails', () => {
-          it('throws an error', async () => {
-            const manager = new PositionManager({
-              trader: {
-                on: () => {},
-                exchange: { createOrder: () => { throw new Error('createOrder error') } }
-              },
-              positions: [position]
-            })
+          behaviours.throws('throws an error', undefined, {
+            check: () => {
+              const manager = new PositionManager({
+                trader: {
+                  on: () => {},
+                  exchange: { createOrder: () => { throw new Error('createOrder error') } }
+                },
+                positions: [position]
+              })
 
-            let thrownErr = null
-
-            try {
-              await manager.close({ id: position.id })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.message).to.eql('createOrder error')
+              return manager.close({ id: position.id })
+            },
+            expect: error => expect(error.message).to.eql('createOrder error')
           })
         })
       })
@@ -283,12 +241,12 @@ describe('PositionManager', () => {
           const buyOrder = new Order({
             foreignId: chance.guid({ version: 4 }),
             options: {
-              ..._.pick(position.entry, ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
-              side: Order.sides.BUY
+              ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
+              side: OrderOptions.sides.BUY
             },
             status: Order.statuses.FILLED,
-            side: Order.sides.BUY,
-            ..._.pick(position.entry, ['exchange', 'market', 'type', 'price']),
+            side: OrderOptions.sides.BUY,
+            ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price']),
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
@@ -299,16 +257,16 @@ describe('PositionManager', () => {
           const sellOrder = new Order({
             foreignId: chance.guid({ version: 4 }),
             options: {
-              ..._.pick(position.entry, ['exchange', 'market']),
-              type: Order.types.LIMIT,
-              side: Order.sides.SELL,
+              ..._.pick(position.entries[0], ['exchange', 'market']),
+              type: OrderOptions.types.LIMIT,
+              side: OrderOptions.sides.SELL,
               price: 20.00,
               baseQuantity: 99.9
             },
             status: Order.statuses.FILLED,
-            ..._.pick(position.entry, ['exchange', 'market']),
-            type: Order.types.LIMIT,
-            side: Order.sides.SELL,
+            ..._.pick(position.entries[0], ['exchange', 'market']),
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.SELL,
             price: 20.00,
             averagePrice: 20.00,
             baseQuantityGross: '99.9',
@@ -345,12 +303,12 @@ describe('PositionManager', () => {
           const buyOrder = new Order({
             foreignId: chance.guid({ version: 4 }),
             options: {
-              ..._.pick(position.entry, ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
-              side: Order.sides.BUY
+              ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
+              side: OrderOptions.sides.BUY
             },
             status: Order.statuses.FILLED,
-            side: Order.sides.BUY,
-            ..._.pick(position.entry, ['exchange', 'market', 'type', 'price']),
+            side: OrderOptions.sides.BUY,
+            ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price']),
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
@@ -361,16 +319,16 @@ describe('PositionManager', () => {
           const sellOrder = new Order({
             foreignId: chance.guid({ version: 4 }),
             options: {
-              ..._.pick(position.entry, ['exchange', 'market']),
-              type: Order.types.LIMIT,
-              side: Order.sides.SELL,
+              ..._.pick(position.entries[0], ['exchange', 'market']),
+              type: OrderOptions.types.LIMIT,
+              side: OrderOptions.sides.SELL,
               price: 20.00,
               baseQuantity: 99.9
             },
             status: Order.statuses.FILLED,
-            ..._.pick(position.entry, ['exchange', 'market']),
-            type: Order.types.LIMIT,
-            side: Order.sides.SELL,
+            ..._.pick(position.entries[0], ['exchange', 'market']),
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.SELL,
             price: 20.00,
             averagePrice: 20.00,
             baseQuantityGross: '99.8991',
@@ -407,12 +365,12 @@ describe('PositionManager', () => {
           const buyOrder = new Order({
             foreignId: chance.guid({ version: 4 }),
             options: {
-              ..._.pick(position.entry, ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
-              side: Order.sides.BUY
+              ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price', 'quoteQuantity']),
+              side: OrderOptions.sides.BUY
             },
             status: Order.statuses.FILLED,
-            side: Order.sides.BUY,
-            ..._.pick(position.entry, ['exchange', 'market', 'type', 'price']),
+            side: OrderOptions.sides.BUY,
+            ..._.pick(position.entries[0], ['exchange', 'market', 'type', 'price']),
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
@@ -423,16 +381,16 @@ describe('PositionManager', () => {
           const sellOrder = new Order({
             foreignId: chance.guid({ version: 4 }),
             options: {
-              ..._.pick(position.entry, ['exchange', 'market']),
-              type: Order.types.LIMIT,
-              side: Order.sides.SELL,
+              ..._.pick(position.entries[0], ['exchange', 'market']),
+              type: OrderOptions.types.LIMIT,
+              side: OrderOptions.sides.SELL,
               price: 20.00,
               baseQuantity: 99.9
             },
             status: Order.statuses.FILLED,
-            ..._.pick(position.entry, ['exchange', 'market']),
-            type: Order.types.LIMIT,
-            side: Order.sides.SELL,
+            ..._.pick(position.entries[0], ['exchange', 'market']),
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.SELL,
             price: 20.00,
             averagePrice: 20.00,
             baseQuantityGross: '99.89',

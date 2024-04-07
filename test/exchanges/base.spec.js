@@ -1,4 +1,4 @@
-const { expect, Factory, chance } = require('../helpers')
+const { expect, Factory, behaviours, chance } = require('../helpers')
 
 const Exchange = require('../../lib/exchanges/base')
 const { ExchangeOrder } = require('../../lib/models')
@@ -7,31 +7,15 @@ describe('Exchanges: Base', () => {
   describe('constructor', () => {
     describe('opts', () => {
       describe('markets', () => {
-        it('must be an array', () => {
-          let thrownErr = null
-
-          try {
-            new Exchange({ markets: chance.integer() }) /* eslint-disable-line no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('markets must be an array')
+        behaviours.throwsValidationError('must be an array', {
+          check: () => (new Exchange({ markets: chance.integer() })),
+          expect: error => expect(error.data[0].message).to.eql('markets must be an array')
         })
 
         describe('items', () => {
-          it('must be an instance of Market', () => {
-            let thrownErr = null
-
-            try {
-              new Exchange({ markets: [chance.integer()] }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('markets[0] must be an instance of the Market class')
+          behaviours.throwsValidationError('must be an instance of Market', {
+            check: () => (new Exchange({ markets: [chance.integer()] })),
+            expect: error => expect(error.data[0].message).to.eql('markets[0] must be an instance of the Market class')
           })
         })
 
@@ -43,31 +27,15 @@ describe('Exchanges: Base', () => {
       })
 
       describe('balances', () => {
-        it('must be an array', () => {
-          let thrownErr = null
-
-          try {
-            new Exchange({ balances: chance.integer() }) /* eslint-disable-line no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('balances must be an array')
+        behaviours.throwsValidationError('must be an array', {
+          check: () => (new Exchange({ balances: chance.integer() })),
+          expect: error => expect(error.data[0].message).to.eql('balances must be an array')
         })
 
         describe('items', () => {
-          it('must be an instance of Balance', () => {
-            let thrownErr = null
-
-            try {
-              new Exchange({ balances: [chance.integer()] }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('balances[0] must be an instance of the Balance class')
+          behaviours.throwsValidationError('must be an instance of Balance', {
+            check: () => (new Exchange({ balances: [chance.integer()] })),
+            expect: error => expect(error.data[0].message).to.eql('balances[0] must be an instance of the Balance class')
           })
         })
 
@@ -79,31 +47,15 @@ describe('Exchanges: Base', () => {
       })
 
       describe('orders', () => {
-        it('must be an array', () => {
-          let thrownErr = null
-
-          try {
-            new Exchange({ orders: chance.integer() }) /* eslint-disable-line no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('orders must be an array')
+        behaviours.throwsValidationError('must be an array', {
+          check: () => (new Exchange({ orders: chance.integer() })),
+          expect: error => expect(error.data[0].message).to.eql('orders must be an array')
         })
 
         describe('items', () => {
-          it('must be an instance of ExchangeOrder', () => {
-            let thrownErr = null
-
-            try {
-              new Exchange({ orders: [chance.integer()] }) /* eslint-disable-line no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('orders[0] must be an instance of the ExchangeOrder class')
+          behaviours.throwsValidationError('must be an instance of ExchangeOrder', {
+            check: () => (new Exchange({ orders: [chance.integer()] })),
+            expect: error => expect(error.data[0].message).to.eql('orders[0] must be an instance of the ExchangeOrder class')
           })
         })
 
@@ -207,6 +159,14 @@ describe('Exchanges: Base', () => {
   })
 
   describe('#createOrder', () => {
+    behaviours.throws('throws error', undefined, {
+      check: () => {
+        const exchange = new Exchange()
+        exchange.createOrder()
+      },
+      expect: error => expect(error.message).to.eql('createOrder not implemented')
+    })
+
     it('throws error', () => {
       const exchange = new Exchange()
       let thrownErr = null

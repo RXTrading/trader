@@ -1,7 +1,7 @@
 const { expect, Factory, chance, BigNumber } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
-const { Balance, ExchangeOrder } = require('../../../../lib/models')
+const { Balance, OrderOptions } = require('../../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   describe('#evaluate when type is TAKE_PROFIT', () => {
@@ -28,8 +28,8 @@ describe('Exchanges: Simulation', () => {
           const order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.TAKE_PROFIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.TAKE_PROFIT,
             stopPrice: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
             baseQuantity: chance.floating({ min: 10, max: 100 })
           })
@@ -45,8 +45,8 @@ describe('Exchanges: Simulation', () => {
           const order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.TAKE_PROFIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.TAKE_PROFIT,
             stopPrice: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
             baseQuantity: chance.floating({ min: 10, max: 100 })
           })
@@ -84,8 +84,8 @@ describe('Exchanges: Simulation', () => {
           const order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.TAKE_PROFIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.TAKE_PROFIT,
             stopPrice: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
             baseQuantity: chance.floating({ min: 10, max: 100 })
           })
@@ -132,8 +132,8 @@ describe('Exchanges: Simulation', () => {
           exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.TAKE_PROFIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.TAKE_PROFIT,
             stopPrice: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
             baseQuantity
           })

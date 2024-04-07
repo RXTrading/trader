@@ -1,4 +1,4 @@
-const { expect, chance, Factory } = require('./helpers')
+const { expect, behaviours, chance, Factory } = require('./helpers')
 
 const RiskManager = require('../lib/riskManager')
 const Trader = require('../lib/trader')
@@ -12,30 +12,14 @@ describe('RiskManager', () => {
         backtest: chance.bool()
       }
 
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new RiskManager({ ...defaultParams, trader: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('trader is required')
+      behaviours.throwsRiskManagerValidationError('is required', {
+        check: () => (new RiskManager({ ...defaultParams, trader: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('trader is required')
       })
 
-      it('must be an Object', () => {
-        let thrownErr = null
-
-        try {
-          new RiskManager({ ...defaultParams, trader: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('trader must be an Object')
+      behaviours.throwsRiskManagerValidationError('is required', {
+        check: () => (new RiskManager({ ...defaultParams, trader: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('trader must be an Object')
       })
     })
   })
@@ -55,71 +39,31 @@ describe('RiskManager', () => {
       const manager = new RiskManager({ trader })
 
       describe('capital', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, capital: undefined })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('capital is required')
+        behaviours.throwsRiskManagerValidationError('is required', {
+          check: () => manager.calculatePosition({ ...defaultParams, capital: undefined }),
+          expect: error => expect(error.data[0].message).to.eql('capital is required')
         })
 
-        it('must be a number', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, capital: chance.string() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('capital must be a number')
+        behaviours.throwsRiskManagerValidationError('must be a number', {
+          check: () => manager.calculatePosition({ ...defaultParams, capital: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('capital must be a number')
         })
       })
 
       describe('risk', () => {
-        it('must be a number', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, risk: chance.string() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('risk must be a number')
+        behaviours.throwsRiskManagerValidationError('must be a number', {
+          check: () => manager.calculatePosition({ ...defaultParams, risk: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('risk must be a number')
         })
 
-        it('must be less than or equal to 1', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, risk: 2.1 })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('risk must be less than or equal to 1')
+        behaviours.throwsRiskManagerValidationError('must be less than or equal to 1', {
+          check: () => manager.calculatePosition({ ...defaultParams, risk: 2.1 }),
+          expect: error => expect(error.data[0].message).to.eql('risk must be less than or equal to 1')
         })
 
-        it('must be greater than or equal to 0', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, risk: -0.00001 })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('risk must be greater than or equal to 0')
+        behaviours.throwsRiskManagerValidationError('must be greater than or equal to 0', {
+          check: () => manager.calculatePosition({ ...defaultParams, risk: -0.00001 }),
+          expect: error => expect(error.data[0].message).to.eql('risk must be greater than or equal to 0')
         })
 
         it('defaults to 0.01', () => {
@@ -130,86 +74,38 @@ describe('RiskManager', () => {
       })
 
       describe('market', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, market: undefined })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('market is required')
+        behaviours.throwsRiskManagerValidationError('is required', {
+          check: () => manager.calculatePosition({ ...defaultParams, market: undefined }),
+          expect: error => expect(error.data[0].message).to.eql('market is required')
         })
 
-        it('must be a string', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, market: chance.integer() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('market must be a string')
+        behaviours.throwsRiskManagerValidationError('must be a string', {
+          check: () => manager.calculatePosition({ ...defaultParams, market: chance.integer() }),
+          expect: error => expect(error.data[0].message).to.eql('market must be a string')
         })
 
-        it('must exist', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, market: chance.string() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('market does not exist')
+        behaviours.throwsRiskManagerValidationError('must exist', {
+          check: () => manager.calculatePosition({ ...defaultParams, market: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('market does not exist')
         })
       })
 
       describe('entryPrice', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, entryPrice: undefined })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('entryPrice is required')
+        behaviours.throwsRiskManagerValidationError('is required', {
+          check: () => manager.calculatePosition({ ...defaultParams, entryPrice: undefined }),
+          expect: error => expect(error.data[0].message).to.eql('entryPrice is required')
         })
 
-        it('must be a number', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, entryPrice: chance.string() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('entryPrice must be a number')
+        behaviours.throwsRiskManagerValidationError('must be a number', {
+          check: () => manager.calculatePosition({ ...defaultParams, entryPrice: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('entryPrice must be a number')
         })
       })
 
       describe('stopLoss', () => {
-        it('must be a number', () => {
-          let thrownErr = null
-
-          try {
-            manager.calculatePosition({ ...defaultParams, stopLoss: chance.string() })
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('RISK_MANAGER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('stopLoss must be a number')
+        behaviours.throwsRiskManagerValidationError('must be a number', {
+          check: () => manager.calculatePosition({ ...defaultParams, stopLoss: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('stopLoss must be a number')
         })
 
         it('defaults to zero', () => {

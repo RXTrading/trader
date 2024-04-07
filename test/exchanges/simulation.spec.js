@@ -1,4 +1,4 @@
-const { expect, chance, BigNumber } = require('../helpers')
+const { expect, behaviours, chance, BigNumber } = require('../helpers')
 
 const Exchange = require('../../lib/exchanges/simulation')
 
@@ -7,30 +7,14 @@ describe('Exchanges: Simulation', () => {
     const exchange = new Exchange()
 
     describe('tick', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          exchange.setTick()
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('tick is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => exchange.setTick(),
+        expect: error => expect(error.data[0].message).to.eql('tick is required')
       })
 
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          exchange.setTick('twenty')
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('tick must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => exchange.setTick('twenty'),
+        expect: error => expect(error.data[0].message).to.eql('tick must be a number')
       })
     })
 
@@ -53,142 +37,62 @@ describe('Exchanges: Simulation', () => {
     }
 
     describe('candle', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          exchange.setCandle()
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('candle.open is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => exchange.setCandle(),
+        expect: error => expect(error.data[0].message).to.eql('candle.open is required')
       })
 
-      it('must be an object', () => {
-        let thrownErr = null
-
-        try {
-          exchange.setCandle(chance.string())
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('candle must be an Object')
+      behaviours.throwsValidationError('must be an object', {
+        check: () => exchange.setCandle(chance.string()),
+        expect: error => expect(error.data[0].message).to.eql('candle must be an Object')
       })
 
       describe('props', () => {
         describe('open', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, open: undefined })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.open is required')
+          behaviours.throwsValidationError('must be an object', {
+            check: () => exchange.setCandle({ ...defaultParams, open: undefined }),
+            expect: error => expect(error.data[0].message).to.eql('candle.open is required')
           })
 
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, open: 'twenty' })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.open must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => exchange.setCandle({ ...defaultParams, open: 'twenty' }),
+            expect: error => expect(error.data[0].message).to.eql('candle.open must be a number')
           })
         })
 
         describe('high', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, high: undefined })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.high is required')
+          behaviours.throwsValidationError('must be an object', {
+            check: () => exchange.setCandle({ ...defaultParams, high: undefined }),
+            expect: error => expect(error.data[0].message).to.eql('candle.high is required')
           })
 
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, high: 'twenty' })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.high must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => exchange.setCandle({ ...defaultParams, high: 'twenty' }),
+            expect: error => expect(error.data[0].message).to.eql('candle.high must be a number')
           })
         })
 
         describe('low', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, low: undefined })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.low is required')
+          behaviours.throwsValidationError('must be an object', {
+            check: () => exchange.setCandle({ ...defaultParams, low: undefined }),
+            expect: error => expect(error.data[0].message).to.eql('candle.low is required')
           })
 
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, low: 'twenty' })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.low must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => exchange.setCandle({ ...defaultParams, low: 'twenty' }),
+            expect: error => expect(error.data[0].message).to.eql('candle.low must be a number')
           })
         })
 
         describe('close', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, close: undefined })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.close is required')
+          behaviours.throwsValidationError('must be an object', {
+            check: () => exchange.setCandle({ ...defaultParams, close: undefined }),
+            expect: error => expect(error.data[0].message).to.eql('candle.close is required')
           })
 
-          it('must be a number', () => {
-            let thrownErr = null
-
-            try {
-              exchange.setCandle({ ...defaultParams, close: 'twenty' })
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('candle.close must be a number')
+          behaviours.throwsValidationError('must be a number', {
+            check: () => exchange.setCandle({ ...defaultParams, close: 'twenty' }),
+            expect: error => expect(error.data[0].message).to.eql('candle.close must be a number')
           })
         })
       })

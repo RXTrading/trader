@@ -1,7 +1,7 @@
-const { expect, Factory, chance, BigNumber } = require('../../helpers')
+const { expect, Factory, behaviours, chance, BigNumber } = require('../../helpers')
 
 const Exchange = require('../../../lib/exchanges/simulation')
-const { Balance, ExchangeOrder } = require('../../../lib/models')
+const { Balance, ExchangeOrder, OrderOptions } = require('../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   describe('#evaluate', () => {
@@ -14,40 +14,24 @@ describe('Exchanges: Simulation', () => {
     const defaultTick = chance.floating({ min: defaultCandle.low, max: defaultCandle.high })
 
     describe('when no tick is set', () => {
-      it('throws an error', () => {
-        const exchange = new Exchange()
-
-        let thrownErr = null
-
-        exchange.setCandle(defaultCandle)
-
-        try {
+      behaviours.throwsSimulationExchangeError('throws an error', {
+        check: () => {
+          const exchange = new Exchange()
+          exchange.setCandle(defaultCandle)
           exchange.evaluate()
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('SIMULATION_EXCHANGE_ERROR')
-        expect(thrownErr.message).to.eql('tick and candle should be set with setTick() and setCandle()')
+        },
+        expect: error => expect(error.message).to.eql('tick and candle should be set with setTick() and setCandle()')
       })
     })
 
     describe('when no candle is set', () => {
-      it('throws an error', () => {
-        const exchange = new Exchange()
-
-        let thrownErr = null
-
-        exchange.setTick(defaultTick)
-
-        try {
+      behaviours.throwsSimulationExchangeError('throws an error', {
+        check: () => {
+          const exchange = new Exchange()
+          exchange.setTick(defaultTick)
           exchange.evaluate()
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('SIMULATION_EXCHANGE_ERROR')
-        expect(thrownErr.message).to.eql('tick and candle should be set with setTick() and setCandle()')
+        },
+        expect: error => expect(error.message).to.eql('tick and candle should be set with setTick() and setCandle()')
       })
     })
 
@@ -111,8 +95,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.BUY,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.BUY,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           quoteQuantity: chance.floating({ min: 1000, max: 100000 })
         }
@@ -143,8 +127,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.BUY,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.BUY,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           baseQuantity: chance.floating({ min: 10, max: 100 })
         }
@@ -188,8 +172,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.BUY,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.BUY,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           quoteQuantity: chance.floating({ min: 100, max: 1000 })
         }
@@ -250,8 +234,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.SELL,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.SELL,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           baseQuantity: chance.floating({ min: 10, max: 100 })
         }
@@ -282,8 +266,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.SELL,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.SELL,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           baseQuantity: chance.floating({ min: 10, max: 100 })
         }
@@ -326,8 +310,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.SELL,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.SELL,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           quoteQuantity: chance.floating({ min: 100, max: 1000 })
         }
@@ -374,8 +358,8 @@ describe('Exchanges: Simulation', () => {
           const orderOptions = {
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.BUY,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.BUY,
+            type: OrderOptions.types.LIMIT,
             price: defaultTick,
             quoteQuantity: chance.floating({ min: 100, max: 1000 })
           }
@@ -400,8 +384,8 @@ describe('Exchanges: Simulation', () => {
           const orderOptions = {
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.LIMIT,
             price: defaultTick,
             quoteQuantity: chance.floating({ min: 100, max: 1000 })
           }
@@ -427,8 +411,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.BUY,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.BUY,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           baseQuantity: chance.floating({ min: 100, max: 1000 })
         }
@@ -464,8 +448,8 @@ describe('Exchanges: Simulation', () => {
         const orderOptions = {
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.SELL,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.SELL,
+          type: OrderOptions.types.LIMIT,
           price: defaultTick,
           baseQuantity: chance.floating({ min: 100, max: 1000 })
         }

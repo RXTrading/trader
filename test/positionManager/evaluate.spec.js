@@ -1,7 +1,7 @@
 const { expect, BigNumber, Factory, sinon, chance } = require('../helpers')
 
 const PositionManager = require('../../lib/positionManager')
-const { Balance, Position, ExchangeOrder, Order } = require('../../lib/models')
+const { Balance, Position, OrderOptions, Order } = require('../../lib/models')
 const Exchange = require('../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
@@ -14,7 +14,7 @@ describe('PositionManager', () => {
       before(() => {
         const market = Factory('market').build()
         const exchangeOrder = Factory('exchangeOrder').build({
-          type: ExchangeOrder.types.LIMIT,
+          type: OrderOptions.types.LIMIT,
           price: 10,
           quoteQuantity: 1000
         })
@@ -30,7 +30,7 @@ describe('PositionManager', () => {
         manager = new PositionManager({ trader: { on: () => {}, emitAsync: () => {}, exchange }, positions: [position] })
       })
 
-      it('updates position orders from exchange order', async () => {
+      it('updates position orders from exchange orders', async () => {
         exchange.setTick(10)
         exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
 
@@ -60,7 +60,7 @@ describe('PositionManager', () => {
           const orderParams = [
             {
               status: Order.statuses.FILLED,
-              type: Order.types.LIMIT,
+              type: OrderOptions.types.LIMIT,
               price: 10,
               quoteQuantity: 1000,
               averagePrice: '10',
@@ -71,8 +71,8 @@ describe('PositionManager', () => {
             },
             {
               status: Order.statuses.FILLED,
-              side: Order.sides.SELL,
-              type: Order.types.LIMIT,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.LIMIT,
               price: 20,
               baseQuantity: 50,
               averagePrice: '20',
@@ -130,7 +130,7 @@ describe('PositionManager', () => {
           const orderParams = [
             {
               status: Order.statuses.FILLED,
-              type: Order.types.LIMIT,
+              type: OrderOptions.types.LIMIT,
               price: 10,
               quoteQuantity: 1000,
               averagePrice: '10',
@@ -141,8 +141,8 @@ describe('PositionManager', () => {
             },
             {
               status: Order.statuses.FILLED,
-              side: Order.sides.SELL,
-              type: Order.types.LIMIT,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.LIMIT,
               price: 20,
               baseQuantity: 99.9,
               averagePrice: '20',
@@ -210,7 +210,7 @@ describe('PositionManager', () => {
 
           const exchangeOrder = Factory('exchangeOrder').build({
             status: Order.statuses.FILLED,
-            type: Order.types.LIMIT,
+            type: OrderOptions.types.LIMIT,
             price: 10,
             quoteQuantity: 1000,
             averagePrice: '10',
@@ -257,7 +257,7 @@ describe('PositionManager', () => {
           const orderParams = [
             {
               status: Order.statuses.FILLED,
-              type: Order.types.LIMIT,
+              type: OrderOptions.types.LIMIT,
               price: 10,
               quoteQuantity: 1000,
               averagePrice: '10',
@@ -268,8 +268,8 @@ describe('PositionManager', () => {
             },
             {
               status: Order.statuses.FILLED,
-              side: Order.sides.SELL,
-              type: Order.types.LIMIT,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.LIMIT,
               price: 20,
               baseQuantity: 99.9,
               averagePrice: '20',
@@ -329,7 +329,7 @@ describe('PositionManager', () => {
           const orderParams = [
             {
               status: Order.statuses.FILLED,
-              type: Order.types.LIMIT,
+              type: OrderOptions.types.LIMIT,
               price: 10,
               quoteQuantity: 1000,
               averagePrice: '10',
@@ -340,8 +340,8 @@ describe('PositionManager', () => {
             },
             {
               status: Order.statuses.FILLED,
-              side: Order.sides.SELL,
-              type: Order.types.LIMIT,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.LIMIT,
               price: 20,
               baseQuantity: 99.9,
               averagePrice: '20',
@@ -398,7 +398,7 @@ describe('PositionManager', () => {
 
           const exchangeOrder = Factory('exchangeOrder').build({
             status: Order.statuses.FILLED,
-            type: Order.types.LIMIT,
+            type: OrderOptions.types.LIMIT,
             price: 10,
             quoteQuantity: 1000,
             averagePrice: '10',
@@ -446,7 +446,7 @@ describe('PositionManager', () => {
         const orderParams = [
           {
             status: Order.statuses.FILLED,
-            type: Order.types.LIMIT,
+            type: OrderOptions.types.LIMIT,
             price: 10,
             quoteQuantity: 1000,
             averagePrice: '10',
@@ -457,8 +457,8 @@ describe('PositionManager', () => {
           },
           {
             status: Order.statuses.FILLED,
-            side: Order.sides.SELL,
-            type: Order.types.LIMIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.LIMIT,
             price: 15,
             baseQuantity: 50,
             averagePrice: '20',
@@ -521,7 +521,7 @@ describe('PositionManager', () => {
             const orderParams = [
               {
                 status: Order.statuses.FILLED,
-                type: Order.types.LIMIT,
+                type: OrderOptions.types.LIMIT,
                 price: 10,
                 quoteQuantity: 1000,
                 averagePrice: '10',
@@ -532,8 +532,8 @@ describe('PositionManager', () => {
               },
               {
                 status: Order.statuses.OPEN,
-                side: Order.sides.SELL,
-                type: Order.types.LIMIT,
+                side: OrderOptions.sides.SELL,
+                type: OrderOptions.types.LIMIT,
                 price: 20,
                 baseQuantity: 99.9
               }
@@ -592,7 +592,7 @@ describe('PositionManager', () => {
             const orderParams = [
               {
                 status: Order.statuses.FILLED,
-                type: Order.types.LIMIT,
+                type: OrderOptions.types.LIMIT,
                 price: 10,
                 quoteQuantity: 1000,
                 averagePrice: '10',
@@ -603,8 +603,8 @@ describe('PositionManager', () => {
               },
               {
                 status: Order.statuses.OPEN,
-                side: Order.sides.SELL,
-                type: Order.types.LIMIT,
+                side: OrderOptions.sides.SELL,
+                type: OrderOptions.types.LIMIT,
                 price: 10.02,
                 baseQuantity: 99.9
               }
@@ -664,7 +664,7 @@ describe('PositionManager', () => {
             const orderParams = [
               {
                 status: Order.statuses.FILLED,
-                type: Order.types.LIMIT,
+                type: OrderOptions.types.LIMIT,
                 price: 10,
                 quoteQuantity: 1000,
                 averagePrice: '10',
@@ -675,8 +675,8 @@ describe('PositionManager', () => {
               },
               {
                 status: Order.statuses.OPEN,
-                side: Order.sides.SELL,
-                type: Order.types.LIMIT,
+                side: OrderOptions.sides.SELL,
+                type: OrderOptions.types.LIMIT,
                 price: 8.75,
                 baseQuantity: 99.9
               }
@@ -735,7 +735,7 @@ describe('PositionManager', () => {
 
           const exchangeOrder = Factory('exchangeOrder').build({
             status: Order.statuses.FILLED,
-            type: Order.types.LIMIT,
+            type: OrderOptions.types.LIMIT,
             price: 10,
             quoteQuantity: 1000,
             averagePrice: '10',
@@ -784,7 +784,7 @@ describe('PositionManager', () => {
 
         for (let i = 0; i < 3; i++) {
           const exchangeOrder = Factory('exchangeOrder').build({
-            type: ExchangeOrder.types.LIMIT,
+            type: OrderOptions.types.LIMIT,
             price: 10,
             quoteQuantity: 1000
           })

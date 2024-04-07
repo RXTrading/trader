@@ -1,4 +1,4 @@
-const { expect, Factory, chance } = require('./helpers')
+const { expect, Factory, behaviours, chance } = require('./helpers')
 
 const Trader = require('../lib/trader')
 const Exchange = require('../lib/exchanges/simulation')
@@ -12,75 +12,35 @@ describe('Trader', () => {
     }
 
     describe('exchange', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new Trader({ ...defaultParams, exchange: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('TRADER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exchange is required')
+      behaviours.throwsTraderValidationError('is required', {
+        check: () => (new Trader({ ...defaultParams, exchange: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('exchange is required')
       })
 
-      it('must be an Object', () => {
-        let thrownErr = null
-
-        try {
-          new Trader({ ...defaultParams, exchange: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('TRADER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exchange must be an Object')
+      behaviours.throwsTraderValidationError('must be an object', {
+        check: () => (new Trader({ ...defaultParams, exchange: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('exchange must be an Object')
       })
     })
 
     describe('positions', () => {
-      it('must be an array', () => {
-        let thrownErr = null
-
-        try {
-          new Trader({ ...defaultParams, positions: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('TRADER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('positions must be an array')
+      behaviours.throwsTraderValidationError('must be an array', {
+        check: () => (new Trader({ ...defaultParams, positions: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('positions must be an array')
       })
 
       describe('items', () => {
-        it('must be an instance of Position', () => {
-          let thrownErr = null
-
-          try {
-            new Trader({ ...defaultParams, positions: [chance.string()] }) /* eslint-disable-line no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('TRADER_VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('positions[0] must be an instance of the Position class')
+        behaviours.throwsTraderValidationError('must be an instance of Position', {
+          check: () => (new Trader({ ...defaultParams, positions: [chance.string()] })),
+          expect: error => expect(error.data[0].message).to.eql('positions[0] must be an instance of the Position class')
         })
       })
     })
 
     describe('backtest', () => {
-      it('must be a boolean', () => {
-        let thrownErr = null
-
-        try {
-          new Trader({ ...defaultParams, backtest: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('TRADER_VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('backtest must be a boolean')
+      behaviours.throwsTraderValidationError('must be boolean', {
+        check: () => (new Trader({ ...defaultParams, backtest: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('backtest must be a boolean')
       })
     })
   })

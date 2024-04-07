@@ -62,6 +62,6 @@ module.exports = {
     classInstanceOf: '{field} must be an instance of the {expected} class',
     insufficientBalance: '{field} is greater than available balance',
     doesNotExist: '{field} does not exist',
-    supportsOnly: '{field} supports {expected} only'
+    doesNotSupport: '{field} does not support {actual}'
   }
 }

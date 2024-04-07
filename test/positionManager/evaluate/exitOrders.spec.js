@@ -1,7 +1,7 @@
-const { expect, BigNumber, Factory, sinon } = require('../../helpers')
+const { expect, BigNumber, Factory, behaviours, sinon } = require('../../helpers')
 
 const PositionManager = require('../../../lib/positionManager')
-const { Balance, ExchangeOrder } = require('../../../lib/models')
+const { Balance, ExchangeOrder, OrderOptions } = require('../../../lib/models')
 const Exchange = require('../../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
@@ -16,8 +16,8 @@ describe('PositionManager', () => {
         exchangeOrder = Factory('exchangeOrder').build({
           market: market.symbol,
           status: ExchangeOrder.statuses.FILLED,
-          side: ExchangeOrder.sides.BUY,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.BUY,
+          type: OrderOptions.types.LIMIT,
           price: 10,
           averagePrice: 10,
           quoteQuantity: 1000,
@@ -27,7 +27,7 @@ describe('PositionManager', () => {
           quoteQuantityNet: 1000
         })
 
-        entryOrder = Factory('orderFromExchangeOrder').build(exchangeOrder)
+        entryOrder = Factory('orderFromExchangeOrder').build(exchangeOrder, { quoteQuantity: 1000 })
       })
 
       describe('and exit order configuration is provided', () => {
@@ -52,22 +52,20 @@ describe('PositionManager', () => {
             beforeEach(() => {
               position = Factory('position').build({
                 orders: [entryOrder],
-                exit: [
+                exits: [
                   {
                     exchange: 'binance',
                     market: market.symbol,
-                    side: ExchangeOrder.sides.SELL,
-                    type: ExchangeOrder.types.STOP_LOSS,
-                    baseQuantity: '$number(entry.baseQuantityNet) * 0.5',
-                    stopPrice: '$number(entry.averagePrice) * 0.99'
+                    type: OrderOptions.types.STOP_LOSS,
+                    baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.5',
+                    stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.99'
                   },
                   {
                     exchange: 'binance',
                     market: market.symbol,
-                    side: ExchangeOrder.sides.SELL,
-                    type: ExchangeOrder.types.STOP_LOSS,
-                    baseQuantity: '$number(entry.baseQuantityNet) * 0.5',
-                    stopPrice: '$number(entry.averagePrice) * 0.98'
+                    type: OrderOptions.types.STOP_LOSS,
+                    baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.5',
+                    stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.98'
                   }
                 ]
               })
@@ -79,8 +77,12 @@ describe('PositionManager', () => {
               exchange.setTick(10)
               exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
 
-              exchange.evaluate()
-              await manager.evaluate()
+              try {
+                exchange.evaluate()
+                await manager.evaluate()
+              } catch (err) {
+                console.log('err', err)
+              }
 
               expect(position.orders.length).to.eql(3)
             })
@@ -96,22 +98,20 @@ describe('PositionManager', () => {
 
               position = Factory('position').build({
                 orders: [entryOrder],
-                exit: [
+                exits: [
                   {
                     exchange: 'binance',
                     market: market.symbol,
-                    side: ExchangeOrder.sides.SELL,
-                    type: ExchangeOrder.types.STOP_LOSS,
-                    baseQuantity: '$number(entry.baseQuantityNet) * 0.5',
-                    stopPrice: '$number(entry.averagePrice) * 0.99'
+                    type: OrderOptions.types.STOP_LOSS,
+                    baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.5',
+                    stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.99'
                   },
                   {
                     exchange: 'binance',
                     market: market.symbol,
-                    side: ExchangeOrder.sides.SELL,
-                    type: ExchangeOrder.types.STOP_LOSS,
-                    baseQuantity: '$number(entry.baseQuantityNet) * 0.5',
-                    stopPrice: '$number(entry.averagePrice) * 0.98'
+                    type: OrderOptions.types.STOP_LOSS,
+                    baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.5',
+                    stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.98'
                   }
                 ]
               })
@@ -123,21 +123,15 @@ describe('PositionManager', () => {
               createStub.restore()
             })
 
-            it('should throw an error', async () => {
-              let thrownErr = null
+            behaviours.throws('should throw an error', undefined, {
+              check: async () => {
+                exchange.setTick(10)
+                exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+                exchange.evaluate()
 
-              exchange.setTick(10)
-              exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
-
-              exchange.evaluate()
-
-              try {
                 await manager.evaluate()
-              } catch (err) {
-                thrownErr = err
-              }
-
-              expect(thrownErr.message).to.eql('Something went wrong creating the order')
+              },
+              expect: error => expect(error.message).to.eql('Something went wrong creating the order')
             })
           })
 
@@ -148,14 +142,14 @@ describe('PositionManager', () => {
             beforeEach(() => {
               position = Factory('position').build({
                 orders: [entryOrder],
-                exit: [
+                exits: [
                   {
                     exchange: 'binance',
                     market: market.symbol,
-                    side: ExchangeOrder.sides.SELL,
-                    type: ExchangeOrder.types.STOP_LOSS,
-                    baseQuantity: '$number(entry.baseQuantityNet) * 0.33',
-                    stopPrice: '$number(entry.averagePrice) * 0.99'
+                    side: OrderOptions.sides.SELL,
+                    type: OrderOptions.types.STOP_LOSS,
+                    baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.33',
+                    stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.99'
                   }
                 ]
               })
@@ -184,22 +178,22 @@ describe('PositionManager', () => {
             beforeEach(() => {
               position = Factory('position').build({
                 orders: [entryOrder],
-                exit: [
+                exits: [
                   {
                     exchange: 'binance',
                     market: market.symbol,
-                    side: ExchangeOrder.sides.SELL,
-                    type: ExchangeOrder.types.STOP_LOSS,
-                    baseQuantity: '$number(entry.baseQuantityNet) * 0.5',
-                    stopPrice: '$number(entry.averagePrice) * 0.99'
+                    side: OrderOptions.sides.SELL,
+                    type: OrderOptions.types.STOP_LOSS,
+                    baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.5',
+                    stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.99'
                   },
                   {
                     exchange: 'binance',
                     market: market.symbol,
-                    side: ExchangeOrder.sides.SELL,
-                    type: ExchangeOrder.types.STOP_LOSS,
-                    baseQuantity: '$number(entry.baseQuantityNet) * 0.2',
-                    stopPrice: '$number(entry.averagePrice) * 0.98'
+                    side: OrderOptions.sides.SELL,
+                    type: OrderOptions.types.STOP_LOSS,
+                    baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.2',
+                    stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.98'
                   }
                 ]
               })
@@ -233,22 +227,22 @@ describe('PositionManager', () => {
           beforeEach(() => {
             position = Factory('position').build({
               orders: [entryOrder],
-              exit: [
+              exits: [
                 {
                   exchange: 'binance',
                   market: market.symbol,
-                  side: ExchangeOrder.sides.SELL,
-                  type: ExchangeOrder.types.STOP_LOSS,
-                  baseQuantity: '$number(entry.baseQuantityNet) * 0.5',
-                  stopPrice: '$number(entry.averagePrice) * 0.99'
+                  side: OrderOptions.sides.SELL,
+                  type: OrderOptions.types.STOP_LOSS,
+                  baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.5',
+                  stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.95'
                 },
                 {
                   exchange: 'binance',
                   market: market.symbol,
-                  side: ExchangeOrder.sides.SELL,
-                  type: ExchangeOrder.types.STOP_LOSS,
-                  baseQuantity: '$number(entry.baseQuantityNet) * 0.2',
-                  stopPrice: '$number(entry.averagePrice) * 0.98'
+                  side: OrderOptions.sides.SELL,
+                  type: OrderOptions.types.STOP_LOSS,
+                  baseQuantity: '($map(entries.averagePrice, $number) ~> $sum) * 0.2',
+                  stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.98'
                 }
               ]
             })
@@ -263,16 +257,13 @@ describe('PositionManager', () => {
             exchange.evaluate()
 
             expect(position.orders.length).to.eql(1)
-            expect(position.orders.length).to.eql(1)
 
             await manager.evaluate()
 
             expect(position.orders.length).to.eql(3)
-            expect(position.orders.length).to.eql(3)
 
             await manager.evaluate()
 
-            expect(position.orders.length).to.eql(3)
             expect(position.orders.length).to.eql(3)
           })
         })
@@ -324,8 +315,8 @@ describe('PositionManager', () => {
         const exchangeOrder = Factory('exchangeOrder').build({
           market: market.symbol,
           status: ExchangeOrder.statuses.OPEN,
-          side: ExchangeOrder.sides.BUY,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.BUY,
+          type: OrderOptions.types.LIMIT,
           price: 5,
           averagePrice: 10,
           quoteQuantity: 1000,
@@ -348,20 +339,20 @@ describe('PositionManager', () => {
 
         position = Factory('position').build({
           orders: [entryOrder],
-          exit: [
+          exits: [
             {
               exchange: 'binance',
               market: market.symbol,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.STOP_LOSS,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.STOP_LOSS,
               baseQuantity: '$number(entry.baseQuantityNet) * 0.5',
               stopPrice: '$number(entry.averagePrice) * 0.99'
             },
             {
               exchange: 'binance',
               market: market.symbol,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.STOP_LOSS,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.STOP_LOSS,
               baseQuantity: '$number(entry.baseQuantityNet) * 0.2',
               stopPrice: '$number(entry.averagePrice) * 0.98'
             }

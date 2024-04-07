@@ -1,7 +1,7 @@
 const { expect, Factory } = require('../../helpers')
 
 const BalanceManager = require('../../../lib/exchanges/simulation/balanceManager')
-const { Balance, ExchangeOrder } = require('../../../lib/models')
+const { Balance, OrderOptions } = require('../../../lib/models')
 
 describe('Exchanges: Simulation BalancerManager', () => {
   describe('#updateFromOrder', () => {
@@ -17,7 +17,7 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('when balance for base symbol does not exist', () => {
       const order = Factory('exchangeOrder').build({
-        side: ExchangeOrder.sides.BUY,
+        side: OrderOptions.sides.BUY,
         quoteQuantity: 100,
         price: 10,
         baseQuantityGross: 10,
@@ -42,7 +42,7 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('when balance for quote symbol does not exist', () => {
       const order = Factory('exchangeOrder').build({
-        side: ExchangeOrder.sides.SELL,
+        side: OrderOptions.sides.SELL,
         baseQuantity: 10,
         price: 10,
         baseQuantityGross: 10,
@@ -67,7 +67,7 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('when SIDE is BUY', () => {
       const order = Factory('exchangeOrder').build({
-        side: ExchangeOrder.sides.BUY,
+        side: OrderOptions.sides.BUY,
         quoteQuantity: 100,
         price: 10,
         baseQuantityGross: 10,
@@ -99,7 +99,7 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('when SIDE is SELL', () => {
       const order = Factory('exchangeOrder').build({
-        side: ExchangeOrder.sides.SELL,
+        side: OrderOptions.sides.SELL,
         baseQuantity: 10,
         price: 10,
         baseQuantityGross: 10,
@@ -143,8 +143,8 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('and side is BUY', () => {
       const order = Factory('exchangeOrder').build({
-        type: ExchangeOrder.types.LIMIT,
-        side: ExchangeOrder.sides.BUY,
+        type: OrderOptions.types.LIMIT,
+        side: OrderOptions.sides.BUY,
         quoteQuantity: 100,
         price: 10,
         baseQuantityGross: 10,
@@ -166,8 +166,8 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('and side is SELL', () => {
       const order = Factory('exchangeOrder').build({
-        type: ExchangeOrder.types.LIMIT,
-        side: ExchangeOrder.sides.SELL,
+        type: OrderOptions.types.LIMIT,
+        side: OrderOptions.sides.SELL,
         baseQuantity: 10,
         price: 10,
         baseQuantityGross: 10,
@@ -223,8 +223,8 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('and side is BUY', () => {
       const order = Factory('exchangeOrder').build({
-        type: ExchangeOrder.types.LIMIT,
-        side: ExchangeOrder.sides.BUY,
+        type: OrderOptions.types.LIMIT,
+        side: OrderOptions.sides.BUY,
         quoteQuantity: 100,
         price: 10,
         baseQuantityGross: 10,
@@ -246,8 +246,8 @@ describe('Exchanges: Simulation BalancerManager', () => {
 
     describe('and side is SELL', () => {
       const order = Factory('exchangeOrder').build({
-        type: ExchangeOrder.types.LIMIT,
-        side: ExchangeOrder.sides.SELL,
+        type: OrderOptions.types.LIMIT,
+        side: OrderOptions.sides.SELL,
         baseQuantity: 10,
         price: 10,
         baseQuantityGross: 10,

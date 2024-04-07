@@ -1,6 +1,8 @@
-const { expect, chance } = require('../helpers')
+const { expect, chance, behaviours } = require('../helpers')
 
 const Signal = require('../../lib/models/signal')
+const Position = require('../../lib/models/position')
+const OrderOptions = require('../../lib/models/orderOptions')
 
 describe('Signal Model', () => {
   it('has statuses', () => {
@@ -26,8 +28,35 @@ describe('Signal Model', () => {
       id: chance.guid({ version: 4 }),
       timestamp: chance.date(),
       status: chance.pickone(Object.values(Signal.statuses)),
-      type: chance.pickone(Object.values(Signal.types)),
-      params: {},
+      type: Signal.types.OPEN_POSITION,
+      params: {
+        type: Position.types.LONG,
+        entries: {
+          exchange: 'binance',
+          market: 'BTC/USDT',
+          type: OrderOptions.types.LIMIT,
+          baseQuantity: 100,
+          price: 10000
+        },
+        exits: [
+          {
+            exchange: 'binance',
+            market: 'BTC/USDT',
+            type: OrderOptions.types.STOP_LOSS_LIMIT,
+            baseQuantity: 9.9,
+            price: 9500,
+            stopPrice: 9600
+          },
+          {
+            exchange: 'binance',
+            market: 'BTC/USDT',
+            type: OrderOptions.types.TAKE_PROFIT_LIMIT,
+            baseQuantity: 9.9,
+            price: 11000,
+            stopPrice: 10900
+          }
+        ]
+      },
       rule: {}
     }
 
@@ -142,10 +171,523 @@ describe('Signal Model', () => {
         expect(thrownErr.data[0].message).to.eql('params must be an Object')
       })
 
-      it('defaults to an empty object', () => {
-        const model = new Signal({ ...defaultParams, params: undefined })
+      describe('props', () => {
+        describe('when type is OPEN_POSITION', () => {
+          describe('type', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (new Signal({ ...defaultParams, params: { ...defaultParams.params, type: undefined } })),
+              expect: error => expect(error.data[0].message).to.eql('params.type is required')
+            })
 
-        expect(model.params).to.eql({})
+            behaviours.throwsValidationError('must match', {
+              check: () => (new Signal({ ...defaultParams, params: { ...defaultParams.params, type: chance.string() } })),
+              expect: error => expect(error.data[0].message).to.eql(`params.type must match one of ${Object.values(Position.types).join(', ')}`)
+            })
+          })
+
+          describe('entries', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => (new Signal({ ...defaultParams, params: { ...defaultParams.params, entries: undefined } })),
+              expect: error => expect(error.data[0].message).to.eql('params.entries is required')
+            })
+
+            describe('props', () => {
+              describe('exchange', () => {
+                behaviours.throwsValidationError('is required', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, entries: { ...defaultParams.params.entries, exchange: undefined } }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql('params.entries[0].exchange is required')
+                })
+              })
+
+              describe('market', () => {
+                behaviours.throwsValidationError('is required', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, entries: { ...defaultParams.params.entries, market: undefined } }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql('params.entries[0].market is required')
+                })
+              })
+
+              describe('type', () => {
+                behaviours.throwsValidationError('is required', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, entries: { ...defaultParams.params.entries, type: undefined } }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql('params.entries[0].type is required')
+                })
+
+                behaviours.throwsValidationError('must match', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, entries: { ...defaultParams.params.entries, type: chance.string() } }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql(`params.entries[0].type must match one of ${Object.values(OrderOptions.types).join(', ')}`)
+                })
+
+                describe('when side is BUY and type is a STOP', () => {
+                  behaviours.throwsValidationError('is not supported', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          entries: {
+                            ...defaultParams.params.entries,
+                            side: OrderOptions.sides.BUY,
+                            type: OrderOptions.types.STOP_LOSS_LIMIT
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.entries[0].type does not support BUY')
+                  })
+                })
+
+                describe('when side is BUY and type is a TAKE PROFIT', () => {
+                  behaviours.throwsValidationError('is not supported', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          entries: {
+                            ...defaultParams.params.entries,
+                            side: OrderOptions.sides.BUY,
+                            type: OrderOptions.types.TAKE_PROFIT_LIMIT
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.entries[0].type does not support BUY')
+                  })
+                })
+              })
+
+              describe('baseQuantity', () => {
+                describe('when type is MARKET', () => {
+                  describe('and neither baseQuantity or quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            entries: {
+                              ...defaultParams.params.entries,
+                              type: OrderOptions.types.MARKET,
+                              baseQuantity: undefined,
+                              quoteQuantity: undefined
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.entries[0].baseQuantity or params.entries[0].quoteQuantity is required')
+                    })
+                  })
+
+                  describe('and both baseQuantity and quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            entries: {
+                              ...defaultParams.params.entries,
+                              type: OrderOptions.types.MARKET,
+                              baseQuantity: 100,
+                              quoteQuantity: 100
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.entries[0].baseQuantity or params.entries[0].quoteQuantity is required')
+                    })
+                  })
+                })
+
+                describe('when type is LIMIT', () => {
+                  describe('and neither baseQuantity or quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            entries: {
+                              ...defaultParams.params.entries,
+                              type: OrderOptions.types.LIMIT,
+                              side: OrderOptions.sides.BUY,
+                              baseQuantity: undefined,
+                              quoteQuantity: undefined
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.entries[0].baseQuantity or params.entries[0].quoteQuantity is required')
+                    })
+                  })
+
+                  describe('and both baseQuantity and quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            entries: {
+                              ...defaultParams.params.entries,
+                              type: OrderOptions.types.LIMIT,
+                              side: OrderOptions.sides.SELL,
+                              baseQuantity: 100,
+                              quoteQuantity: 100
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.entries[0].baseQuantity or params.entries[0].quoteQuantity is required')
+                    })
+                  })
+                })
+
+                describe('when type is not MARKET or LIMIT', () => {
+                  behaviours.throwsValidationError('is required', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          entries: {
+                            ...defaultParams.params.entries,
+                            type: OrderOptions.types.STOP_LOSS_LIMIT,
+                            baseQuantity: undefined,
+                            quoteQuantity: undefined
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.entries[0].baseQuantity is required')
+                  })
+                })
+              })
+
+              describe('price', () => {
+                describe('when type has LIMIT', () => {
+                  behaviours.throwsValidationError('is required', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          entries: {
+                            ...defaultParams.params.entries,
+                            type: OrderOptions.types.STOP_LOSS_LIMIT,
+                            baseQuantity: 100,
+                            quoteQuantity: undefined,
+                            price: undefined
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.entries[0].price is required')
+                  })
+                })
+              })
+            })
+          })
+
+          describe('exits', () => {
+            describe('props', () => {
+              describe('exchange', () => {
+                behaviours.throwsValidationError('is required', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, exits: [{ ...defaultParams.params.exits[0], exchange: undefined }] }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql('params.exits[0].exchange is required')
+                })
+              })
+
+              describe('market', () => {
+                behaviours.throwsValidationError('is required', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, exits: [{ ...defaultParams.params.exits[0], market: undefined }] }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql('params.exits[0].market is required')
+                })
+              })
+
+              describe('type', () => {
+                behaviours.throwsValidationError('is required', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, exits: { ...defaultParams.params.exits[0], type: undefined } }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql('params.exits[0].type is required')
+                })
+
+                behaviours.throwsValidationError('must match', {
+                  check: () => (
+                    new Signal({
+                      ...defaultParams,
+                      params: { ...defaultParams.params, exits: { ...defaultParams.params.exits[0], type: chance.string() } }
+                    })
+                  ),
+                  expect: error => expect(error.data[0].message).to.eql(`params.exits[0].type must match one of ${Object.values(OrderOptions.types).join(', ')}`)
+                })
+
+                describe('when side is BUY and type is a STOP', () => {
+                  behaviours.throwsValidationError('is not supported', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          exits: {
+                            ...defaultParams.params.exits[0],
+                            side: OrderOptions.sides.BUY,
+                            type: OrderOptions.types.STOP_LOSS_LIMIT
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.exits[0].type does not support BUY')
+                  })
+                })
+
+                describe('when side is BUY and type is a TAKE PROFIT', () => {
+                  behaviours.throwsValidationError('is not supported', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          exits: {
+                            ...defaultParams.params.exits[0],
+                            side: OrderOptions.sides.BUY,
+                            type: OrderOptions.types.TAKE_PROFIT_LIMIT
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.exits[0].type does not support BUY')
+                  })
+                })
+              })
+
+              describe('baseQuantity', () => {
+                describe('when type is MARKET', () => {
+                  describe('and neither baseQuantity or quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            exits: {
+                              ...defaultParams.params.exits[0],
+                              type: OrderOptions.types.MARKET,
+                              baseQuantity: undefined,
+                              quoteQuantity: undefined
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.exits[0].baseQuantity or params.exits[0].quoteQuantity is required')
+                    })
+                  })
+
+                  describe('and both baseQuantity and quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            exits: {
+                              ...defaultParams.params.exits[0],
+                              type: OrderOptions.types.MARKET,
+                              baseQuantity: 100,
+                              quoteQuantity: 100
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.exits[0].baseQuantity or params.exits[0].quoteQuantity is required')
+                    })
+                  })
+                })
+
+                describe('when type is LIMIT', () => {
+                  describe('and neither baseQuantity or quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            exits: {
+                              ...defaultParams.params.exits[0],
+                              type: OrderOptions.types.LIMIT,
+                              side: OrderOptions.sides.BUY,
+                              baseQuantity: undefined,
+                              quoteQuantity: undefined
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.exits[0].baseQuantity or params.exits[0].quoteQuantity is required')
+                    })
+                  })
+
+                  describe('and both baseQuantity and quoteQuantity are provided', () => {
+                    behaviours.throwsValidationError('requires baseQuantity or quoteQuantity', {
+                      check: () => (
+                        new Signal({
+                          ...defaultParams,
+                          params: {
+                            ...defaultParams.params,
+                            exits: {
+                              ...defaultParams.params.exits[0],
+                              type: OrderOptions.types.LIMIT,
+                              side: OrderOptions.sides.SELL,
+                              baseQuantity: 100,
+                              quoteQuantity: 100
+                            }
+                          }
+                        })
+                      ),
+                      expect: error => expect(error.data[0].message).to.eql('params.exits[0].baseQuantity or params.exits[0].quoteQuantity is required')
+                    })
+                  })
+                })
+
+                describe('when type is not MARKET or LIMIT', () => {
+                  behaviours.throwsValidationError('is required', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          exits: {
+                            ...defaultParams.params.exits[0],
+                            type: OrderOptions.types.STOP_LOSS_LIMIT,
+                            baseQuantity: undefined,
+                            quoteQuantity: undefined
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.exits[0].baseQuantity is required')
+                  })
+                })
+              })
+
+              describe('price', () => {
+                describe('when type has LIMIT', () => {
+                  behaviours.throwsValidationError('is required', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          exits: {
+                            ...defaultParams.params.exits[0],
+                            type: OrderOptions.types.STOP_LOSS_LIMIT,
+                            baseQuantity: 100,
+                            quoteQuantity: undefined,
+                            price: undefined
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.exits[0].price is required')
+                  })
+                })
+              })
+
+              describe('stopPrice', () => {
+                describe('when type has STOP_LOSS', () => {
+                  behaviours.throwsValidationError('is required', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          exits: {
+                            ...defaultParams.params.exits[0],
+                            type: OrderOptions.types.STOP_LOSS_LIMIT,
+                            side: OrderOptions.sides.SELL,
+                            baseQuantity: 100,
+                            quoteQuantity: undefined,
+                            stopPrice: undefined
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.exits[0].stopPrice is required')
+                  })
+                })
+
+                describe('when type has TAKE_PROFIT', () => {
+                  behaviours.throwsValidationError('is required', {
+                    check: () => (
+                      new Signal({
+                        ...defaultParams,
+                        params: {
+                          ...defaultParams.params,
+                          exits: {
+                            ...defaultParams.params.exits[0],
+                            type: OrderOptions.types.TAKE_PROFIT,
+                            side: OrderOptions.sides.SELL,
+                            baseQuantity: 100,
+                            quoteQuantity: undefined,
+                            stopPrice: undefined
+                          }
+                        }
+                      })
+                    ),
+                    expect: error => expect(error.data[0].message).to.eql('params.exits[0].stopPrice is required')
+                  })
+                })
+              })
+            })
+          })
+        })
+
+        describe('when type is CLOSE_POSITION', () => {
+          describe('id', () => {
+            behaviours.throwsValidationError('is required', {
+              check: () => new Signal({ ...defaultParams, type: Signal.types.CLOSE_POSITION, params: { id: undefined } }),
+              expect: error => expect(error.data[0].message).to.eql('params.id is required')
+            })
+
+            behaviours.throwsValidationError('must be a UUID', {
+              check: () => new Signal({ ...defaultParams, type: Signal.types.CLOSE_POSITION, params: { id: chance.string() } }),
+              expect: error => expect(error.data[0].message).to.eql('params.id must be a valid UUID')
+            })
+          })
+        })
       })
     })
 

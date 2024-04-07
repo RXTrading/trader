@@ -1,33 +1,11 @@
-const { expect, chance, Factory } = require('../helpers')
+const { expect, chance, Factory, behaviours } = require('../helpers')
 
 const ExchangeOrder = require('../../lib/models/exchangeOrder')
+const OrderOptions = require('../../lib/models/orderOptions')
 
 describe('ExchangeOrder Model', () => {
   it('has statuses', () => {
     expect(ExchangeOrder.statuses).to.eql({ NEW: 'NEW', OPEN: 'OPEN', FILLED: 'FILLED', CANCELLED: 'CANCELLED' })
-  })
-
-  it('has sides', () => {
-    expect(ExchangeOrder.sides).to.eql({ BUY: 'BUY', SELL: 'SELL' })
-  })
-
-  it('has types', () => {
-    expect(ExchangeOrder.types).to.eql({
-      MARKET: 'MARKET',
-      LIMIT: 'LIMIT',
-      STOP_LOSS: 'STOP_LOSS',
-      STOP_LOSS_LIMIT: 'STOP_LOSS_LIMIT',
-      TAKE_PROFIT: 'TAKE_PROFIT',
-      TAKE_PROFIT_LIMIT: 'TAKE_PROFIT_LIMIT'
-    })
-  })
-
-  it('has market types', () => {
-    expect(ExchangeOrder.marketTypes).to.eql([ExchangeOrder.types.MARKET, ExchangeOrder.types.STOP_LOSS, ExchangeOrder.types.TAKE_PROFIT])
-  })
-
-  it('has limit types', () => {
-    expect(ExchangeOrder.limitTypes).to.eql([ExchangeOrder.types.LIMIT, ExchangeOrder.types.STOP_LOSS_LIMIT, ExchangeOrder.types.TAKE_PROFIT_LIMIT])
   })
 
   describe('params', () => {
@@ -37,9 +15,8 @@ describe('ExchangeOrder Model', () => {
       exchange: 'binance',
       market: 'BTC/USDT',
       status: chance.pickone(Object.values(ExchangeOrder.statuses)),
-      side: ExchangeOrder.sides.BUY,
-      type: ExchangeOrder.types.LIMIT,
-      baseQuantity: 100,
+      side: OrderOptions.sides.BUY,
+      type: OrderOptions.types.LIMIT,
       quoteQuantity: 1000.00,
       price: 10,
       baseQuantityGross: chance.integer({ min: 1, max: 1000 }),
@@ -51,45 +28,21 @@ describe('ExchangeOrder Model', () => {
     }
 
     describe('id', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, id: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('id is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new ExchangeOrder({ ...defaultParams, id: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('id is required')
       })
 
-      it('must be a UUID', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, id: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('id must be a valid UUID')
+      behaviours.throwsValidationError('must be a UUID', {
+        check: () => (new ExchangeOrder({ ...defaultParams, id: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('id must be a valid UUID')
       })
     })
 
     describe('timestamp', () => {
-      it('must be a date', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, timestamp: 'tomorrow' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('timestamp must be a Date')
+      behaviours.throwsValidationError('must be a date', {
+        check: () => (new ExchangeOrder({ ...defaultParams, timestamp: 'tomorrow' })),
+        expect: error => expect(error.data[0].message).to.eql('timestamp must be a Date')
       })
 
       it('defaults to current time', () => {
@@ -101,75 +54,33 @@ describe('ExchangeOrder Model', () => {
     })
 
     describe('exchange', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, exchange: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exchange is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new ExchangeOrder({ ...defaultParams, exchange: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('exchange is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, exchange: chance.integer() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('exchange must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new ExchangeOrder({ ...defaultParams, exchange: chance.integer() })),
+        expect: error => expect(error.data[0].message).to.eql('exchange must be a string')
       })
     })
 
     describe('market', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, market: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('market is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new ExchangeOrder({ ...defaultParams, market: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('market is required')
       })
 
-      it('must be a string', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, market: chance.integer() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('market must be a string')
+      behaviours.throwsValidationError('must be a string', {
+        check: () => (new ExchangeOrder({ ...defaultParams, market: chance.integer() })),
+        expect: error => expect(error.data[0].message).to.eql('market must be a string')
       })
     })
 
     describe('status', () => {
-      it('must match', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, status: chance.string({ max: 5, aplha: true }) }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql(
-          `status must match one of ${Object.values(ExchangeOrder.statuses).join(', ')}`
-        )
+      behaviours.throwsValidationError('must match', {
+        check: () => (new ExchangeOrder({ ...defaultParams, status: chance.string({ max: 5, aplha: true }) })),
+        expect: error => expect(error.data[0].message).to.eql(`status must match one of ${Object.values(ExchangeOrder.statuses).join(', ')}`)
       })
 
       it('defaults to NEW', () => {
@@ -181,397 +92,175 @@ describe('ExchangeOrder Model', () => {
     })
 
     describe('side', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, side: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('side is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new ExchangeOrder({ ...defaultParams, side: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('side is required')
       })
 
-      it('must match', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, side: chance.string({ max: 5, aplha: true }) }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql(
-          `side must match one of ${Object.values(ExchangeOrder.sides).join(', ')}`
-        )
+      behaviours.throwsValidationError('must match', {
+        check: () => (new ExchangeOrder({ ...defaultParams, side: chance.string({ max: 5, aplha: true }) })),
+        expect: error => expect(error.data[0].message).to.eql(`side must match one of ${Object.values(OrderOptions.sides).join(', ')}`)
       })
     })
 
     describe('type', () => {
-      it('is required', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, type: undefined }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('type is required')
+      behaviours.throwsValidationError('is required', {
+        check: () => (new ExchangeOrder({ ...defaultParams, type: undefined })),
+        expect: error => expect(error.data[0].message).to.eql('type is required')
       })
 
-      it('must match', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, type: chance.string({ max: 5, aplha: true }) }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql(
-          `type must match one of ${Object.values(ExchangeOrder.types).join(', ')}`
-        )
+      behaviours.throwsValidationError('must match', {
+        check: () => (new ExchangeOrder({ ...defaultParams, type: chance.string({ max: 5, aplha: true }) })),
+        expect: error => expect(error.data[0].message).to.eql(`type must match one of ${Object.values(OrderOptions.types).join(', ')}`)
       })
 
-      describe('when type is MARKET or LIMIT', () => {
-        it('supports BUY and SELL side', () => {
-          const marketBuy = new ExchangeOrder({
-            ...defaultParams,
-            type: ExchangeOrder.types.MARKET,
-            side: ExchangeOrder.sides.BUY,
-            baseQuantity: undefined
-          })
-          const marketSell = new ExchangeOrder({
-            ...defaultParams,
-            type: ExchangeOrder.types.MARKET,
-            side: ExchangeOrder.sides.SELL,
-            baseQuantity: 1,
-            quoteQuantity: undefined
-          })
-          const limitBuy = new ExchangeOrder({
-            ...defaultParams,
-            type: ExchangeOrder.types.LIMIT,
-            side: ExchangeOrder.sides.BUY
-          })
-          const limitSell = new ExchangeOrder({
-            ...defaultParams,
-            type: ExchangeOrder.types.LIMIT,
-            side: ExchangeOrder.sides.SELL
-          })
-
-          expect(marketBuy.id).not.to.be.null()
-          expect(marketSell.id).not.to.be.null()
-          expect(limitBuy.id).not.to.be.null()
-          expect(limitSell.id).not.to.be.null()
+      describe('when side is BUY and type is a STOP', () => {
+        behaviours.throwsValidationError('is not supported', {
+          check: () => (
+            new ExchangeOrder({
+              ...defaultParams,
+              side: OrderOptions.sides.BUY,
+              type: OrderOptions.types.STOP_LOSS_LIMIT
+            })
+          ),
+          expect: error => expect(error.data[0].message).to.eql('type does not support BUY')
         })
       })
 
-      describe('when type is not MARKET or LIMIT', () => {
-        it('supports only SELL', () => {
-          let thrownErr = null
-
-          try {
-            /* eslint-disable no-new */
+      describe('when side is BUY and type is a TAKE PROFIT', () => {
+        behaviours.throwsValidationError('is not supported', {
+          check: () => (
             new ExchangeOrder({
               ...defaultParams,
-              type: ExchangeOrder.types.STOP_LOSS,
-              side: ExchangeOrder.sides.BUY
+              side: OrderOptions.sides.BUY,
+              type: OrderOptions.types.TAKE_PROFIT
             })
-            /* eslint-enable no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('type supports SELL only')
+          ),
+          expect: error => expect(error.data[0].message).to.eql('type does not support BUY')
         })
       })
     })
 
     describe('baseQuantity', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          /* eslint-disable no-new */
-          new ExchangeOrder({ ...defaultParams, baseQuantity: 'seventy' })
-          /* eslint-enable no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantity must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, baseQuantity: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('baseQuantity must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          /* eslint-disable no-new */
-          new ExchangeOrder({ ...defaultParams, baseQuantity: -1 })
-          /* eslint-enable no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantity must be greater than or equal to 0')
-      })
-
-      describe('when type is MARKET', () => {
-        describe('when side is BUY', () => {
-          it('is not required', () => {
-            const order = new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.BUY,
-              type: ExchangeOrder.types.MARKET,
-              baseQuantity: undefined
-            })
-
-            expect(order.baseQuantity).to.eql(undefined)
-          })
-        })
-
-        describe('when side is SELL', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new ExchangeOrder({
-                ...defaultParams,
-                side: ExchangeOrder.sides.SELL,
-                type: ExchangeOrder.types.MARKET,
-                baseQuantity: undefined
-              })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('baseQuantity is required')
-          })
-        })
-      })
-
-      describe('when type is LIMIT', () => {
-        describe('when side is BUY', () => {
-          it('is not required', () => {
-            const order = new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.BUY,
-              type: ExchangeOrder.types.LIMIT,
-              baseQuantity: undefined
-            })
-
-            expect(order.baseQuantity).to.eql(undefined)
-          })
-        })
-
-        describe('when side is SELL', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new ExchangeOrder({
-                ...defaultParams,
-                side: ExchangeOrder.sides.SELL,
-                type: ExchangeOrder.types.LIMIT,
-                baseQuantity: undefined
-              })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('baseQuantity is required')
-          })
-        })
-      })
-
-      describe('when any other type', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            /* eslint-disable no-new */
-            new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.STOP_LOSS,
-              baseQuantity: undefined
-            })
-            /* eslint-enable no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('baseQuantity is required')
-        })
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, baseQuantity: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('baseQuantity must be greater than or equal to 0')
       })
     })
 
     describe('quoteQuantity', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          /* eslint-disable no-new */
-          new ExchangeOrder({ ...defaultParams, quoteQuantity: 'seventy' })
-          /* eslint-enable no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantity must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, quoteQuantity: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantity must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, quoteQuantity: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantity must be greater than or equal to 0')
+      })
+    })
 
-        try {
-          /* eslint-disable no-new */
-          new ExchangeOrder({ ...defaultParams, quoteQuantity: -1 })
-          /* eslint-enable no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantity must be greater than or equal to 0')
+    describe('price', () => {
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, price: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('price must be a number')
       })
 
-      describe('when type is MARKET', () => {
-        describe('when side is BUY', () => {
-          it('is required', () => {
-            let thrownErr = null
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, price: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('price must be greater than or equal to 0')
+      })
 
-            try {
-              /* eslint-disable no-new */
-              new ExchangeOrder({
-                ...defaultParams,
-                side: ExchangeOrder.sides.BUY,
-                type: ExchangeOrder.types.MARKET,
-                baseQuantity: 1,
-                quoteQuantity: undefined
-              })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('quoteQuantity is required')
-          })
-        })
-
-        describe('when side is SELL', () => {
-          it('is not required', () => {
-            const order = new ExchangeOrder({
+      describe('when type has LIMIT', () => {
+        behaviours.throwsValidationError('is required', {
+          check: () => (
+            new ExchangeOrder({
               ...defaultParams,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.MARKET,
+              type: OrderOptions.types.STOP_LOSS_LIMIT,
+              side: OrderOptions.sides.SELL,
+              baseQuantity: 100,
               quoteQuantity: undefined,
-              baseQuantity: 1
+              price: undefined
             })
-
-            expect(order.quoteQuantity).to.eql(undefined)
-          })
-        })
-      })
-
-      describe('when type is LIMIT', () => {
-        describe('when side is BUY', () => {
-          it('is required', () => {
-            let thrownErr = null
-
-            try {
-              /* eslint-disable no-new */
-              new ExchangeOrder({
-                ...defaultParams,
-                side: ExchangeOrder.sides.BUY,
-                type: ExchangeOrder.types.LIMIT,
-                baseQuantity: 1,
-                quoteQuantity: undefined
-              })
-              /* eslint-enable no-new */
-            } catch (err) {
-              thrownErr = err
-            }
-
-            expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-            expect(thrownErr.data[0].message).to.eql('quoteQuantity is required')
-          })
-        })
-
-        describe('when side is SELL', () => {
-          it('is not required', () => {
-            const order = new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.LIMIT,
-              baseQuantity: 1,
-              quoteQuantity: undefined
-            })
-
-            expect(order.quoteQuantity).to.eql(undefined)
-          })
-        })
-      })
-
-      describe('when any other type', () => {
-        it('is not required', () => {
-          const order = new ExchangeOrder({
-            ...defaultParams,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.TAKE_PROFIT,
-            quoteQuantity: undefined,
-            stopPrice: 100,
-            baseQuantity: 1
-          })
-
-          expect(order.quoteQuantity).to.eql(undefined)
+          ),
+          expect: error => expect(error.data[0].message).to.eql('price is required')
         })
       })
     })
 
-    describe('baseQuantityGross', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, baseQuantityGross: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantityGross must be a number')
+    describe('stopPrice', () => {
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, stopPrice: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('stopPrice must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, stopPrice: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('stopPrice must be greater than or equal to 0')
+      })
 
-        try {
-          new ExchangeOrder({ ...defaultParams, baseQuantityGross: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
+      describe('when type is MARKET', () => {
+        it('defaults to underfined', () => {
+          const model = new ExchangeOrder({ ...defaultParams, type: 'MARKET', stopPrice: undefined })
 
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantityGross must be greater than or equal to 0')
+          expect(model.stopPrice).to.undefined()
+        })
+      })
+
+      describe('when type has STOP_LOSS', () => {
+        behaviours.throwsValidationError('is required', {
+          check: () => (
+            new ExchangeOrder({
+              ...defaultParams,
+              type: OrderOptions.types.STOP_LOSS_LIMIT,
+              side: OrderOptions.sides.SELL,
+              baseQuantity: 100,
+              quoteQuantity: undefined,
+              stopPrice: undefined
+            })
+          ),
+          expect: error => expect(error.data[0].message).to.eql('stopPrice is required')
+        })
+      })
+
+      describe('when type has TAKE_PROFIT', () => {
+        behaviours.throwsValidationError('is required', {
+          check: () => (
+            new ExchangeOrder({
+              ...defaultParams,
+              type: OrderOptions.types.TAKE_PROFIT,
+              side: OrderOptions.sides.SELL,
+              baseQuantity: 100,
+              quoteQuantity: undefined,
+              stopPrice: undefined
+            })
+          ),
+          expect: error => expect(error.data[0].message).to.eql('stopPrice is required')
+        })
+      })
+    })
+
+    describe('stopPriceHit', () => {
+      behaviours.throwsValidationError('must be a boolean', {
+        check: () => (new ExchangeOrder({ ...defaultParams, stopPriceHit: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('stopPriceHit must be a boolean')
+      })
+    })
+
+    describe('baseQuantityGross', () => {
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, baseQuantityGross: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('baseQuantityGross must be a number')
+      })
+
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, baseQuantityGross: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('baseQuantityGross must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {
@@ -583,30 +272,14 @@ describe('ExchangeOrder Model', () => {
     })
 
     describe('baseQuantityNet', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, baseQuantityNet: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantityNet must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, baseQuantityNet: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('baseQuantityNet must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, baseQuantityNet: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('baseQuantityNet must be greater than or equal to 0')
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, baseQuantityNet: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('baseQuantityNet must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {
@@ -618,30 +291,14 @@ describe('ExchangeOrder Model', () => {
     })
 
     describe('quoteQuantityGross', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, quoteQuantityGross: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantityGross must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, quoteQuantityGross: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantityGross must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, quoteQuantityGross: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantityGross must be greater than or equal to 0')
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, quoteQuantityGross: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantityGross must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {
@@ -653,30 +310,14 @@ describe('ExchangeOrder Model', () => {
     })
 
     describe('quoteQuantityNet', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, quoteQuantityNet: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantityNet must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, quoteQuantityNet: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantityNet must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, quoteQuantityNet: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('quoteQuantityNet must be greater than or equal to 0')
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, quoteQuantityNet: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('quoteQuantityNet must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {
@@ -687,241 +328,15 @@ describe('ExchangeOrder Model', () => {
       })
     })
 
-    describe('price', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, price: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('price must be a number')
-      })
-
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, price: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('price must be greater than or equal to 0')
-      })
-
-      describe('when type has LIMIT', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            /* eslint-disable no-new */
-            new ExchangeOrder({ ...defaultParams, type: 'LIMIT', price: undefined })
-            /* eslint-enable no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('price is required')
-        })
-      })
-
-      describe('when type does not have LIMIT', () => {
-        it('defaults to underfined', () => {
-          const model = new ExchangeOrder({
-            ...defaultParams,
-            type: 'MARKET',
-            baseQuantity: undefined,
-            price: undefined
-          })
-
-          expect(model.price).to.undefined()
-        })
-      })
-    })
-
-    describe('stopPrice', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, stopPrice: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('stopPrice must be a number')
-      })
-
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, stopPrice: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('stopPrice must be greater than or equal to 0')
-      })
-
-      describe('when type is STOP_LOSS', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            /* eslint-disable no-new */
-            new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.STOP_LOSS,
-              baseQuantity: chance.integer({ min: 1, max: 1000 }),
-              quoteQuantity: undefined,
-              stopPrice: undefined
-            })
-            /* eslint-enable no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('stopPrice is required')
-        })
-      })
-
-      describe('when type is STOP_LOSS_LIMIT', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            /* eslint-disable no-new */
-            new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.STOP_LOSS_LIMIT,
-              baseQuantity: chance.integer({ min: 1, max: 1000 }),
-              quoteQuantity: undefined,
-              stopPrice: undefined
-            })
-            /* eslint-enable no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('stopPrice is required')
-        })
-      })
-
-      describe('when type has TAKE_PROFIT', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            /* eslint-disable no-new */
-            new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.TAKE_PROFIT,
-              baseQuantity: chance.integer({ min: 1, max: 1000 }),
-              quoteQuantity: undefined,
-              stopPrice: undefined
-            })
-            /* eslint-enable no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('stopPrice is required')
-        })
-      })
-
-      describe('when type is TAKE_PROFIT_LIMIT', () => {
-        it('is required', () => {
-          let thrownErr = null
-
-          try {
-            /* eslint-disable no-new */
-            new ExchangeOrder({
-              ...defaultParams,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.TAKE_PROFIT_LIMIT,
-              baseQuantity: chance.integer({ min: 1, max: 1000 }),
-              quoteQuantity: undefined,
-              stopPrice: undefined
-            })
-            /* eslint-enable no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('stopPrice is required')
-        })
-      })
-
-      describe('when is MARKET', () => {
-        it('defaults to underfined', () => {
-          const model = new ExchangeOrder({
-            ...defaultParams,
-            type: ExchangeOrder.types.MARKET,
-            baseQuantity: undefined
-            // stopPrice: undefined
-          })
-
-          expect(model.stopPrice).to.undefined()
-        })
-      })
-    })
-
-    describe('stopPriceHit', () => {
-      it('must be a boolean', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, stopPriceHit: 'sure' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('stopPriceHit must be a boolean')
-      })
-    })
-
     describe('averagePrice', () => {
-      it('must be a number', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, averagePrice: 'seventy' }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('averagePrice must be a number')
+      behaviours.throwsValidationError('must be a number', {
+        check: () => (new ExchangeOrder({ ...defaultParams, averagePrice: 'seventy' })),
+        expect: error => expect(error.data[0].message).to.eql('averagePrice must be a number')
       })
 
-      it('must be greater than or equal to 0', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, averagePrice: -1 }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('averagePrice must be greater than or equal to 0')
+      behaviours.throwsValidationError('must be greater than or equal to 0', {
+        check: () => (new ExchangeOrder({ ...defaultParams, averagePrice: -1 })),
+        expect: error => expect(error.data[0].message).to.eql('averagePrice must be greater than or equal to 0')
       })
 
       it('defaults to 0', () => {
@@ -933,31 +348,15 @@ describe('ExchangeOrder Model', () => {
     })
 
     describe('trades', () => {
-      it('must be an array', () => {
-        let thrownErr = null
-
-        try {
-          new ExchangeOrder({ ...defaultParams, trades: chance.string() }) /* eslint-disable-line no-new */
-        } catch (err) {
-          thrownErr = err
-        }
-
-        expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-        expect(thrownErr.data[0].message).to.eql('trades must be an array')
+      behaviours.throwsValidationError('must be an array', {
+        check: () => (new ExchangeOrder({ ...defaultParams, trades: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('trades must be an array')
       })
 
       describe('items', () => {
-        it('must be an instance of Trade', () => {
-          let thrownErr = null
-
-          try {
-            new ExchangeOrder({ ...defaultParams, trades: [{}] }) /* eslint-disable-line no-new */
-          } catch (err) {
-            thrownErr = err
-          }
-
-          expect(thrownErr.type).to.eql('VALIDATION_ERROR')
-          expect(thrownErr.data[0].message).to.eql('trades[0] must be an instance of the Trade class')
+        behaviours.throwsValidationError('must be an instance of Trade', {
+          check: () => (new ExchangeOrder({ ...defaultParams, trades: [{}] })),
+          expect: error => expect(error.data[0].message).to.eql('trades[0] must be an instance of the Trade class')
         })
       })
 
@@ -973,7 +372,7 @@ describe('ExchangeOrder Model', () => {
   describe('.isMarketOrder', () => {
     describe('when order type is a MARKET order', () => {
       it('returns true', () => {
-        const order = Factory('exchangeOrder').build({ type: ExchangeOrder.types.MARKET })
+        const order = Factory('exchangeOrder').build({ type: OrderOptions.types.MARKET })
         expect(ExchangeOrder.isMarketOrder(order)).to.eql(true)
       })
     })
@@ -981,8 +380,7 @@ describe('ExchangeOrder Model', () => {
     describe('when order type is not a MARKET order', () => {
       it('returns false', () => {
         const order = Factory('exchangeOrder').build({
-          type: ExchangeOrder.types.LIMIT,
-          baseQuantity: 100,
+          type: OrderOptions.types.LIMIT,
           quoteQuantity: 10000,
           price: 100
         })
@@ -996,8 +394,7 @@ describe('ExchangeOrder Model', () => {
     describe('when order type is a LIMIT order', () => {
       it('returns true', () => {
         const order = Factory('exchangeOrder').build({
-          type: ExchangeOrder.types.LIMIT,
-          baseQuantity: 100,
+          type: OrderOptions.types.LIMIT,
           quoteQuantity: 10000,
           price: 100
         })
@@ -1008,7 +405,7 @@ describe('ExchangeOrder Model', () => {
 
     describe('when order type is not a LIMIT order', () => {
       it('returns false', () => {
-        const order = Factory('exchangeOrder').build({ type: ExchangeOrder.types.MARKET })
+        const order = Factory('exchangeOrder').build({ type: OrderOptions.types.MARKET })
 
         expect(ExchangeOrder.isLimitOrder(order)).to.eql(false)
       })

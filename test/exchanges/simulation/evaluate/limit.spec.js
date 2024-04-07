@@ -1,7 +1,7 @@
 const { expect, Factory, chance, BigNumber } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
-const { Balance, ExchangeOrder } = require('../../../../lib/models')
+const { Balance, OrderOptions } = require('../../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   const market = Factory('market').build({ symbol: 'BTC/USDT' })
@@ -34,8 +34,8 @@ describe('Exchanges: Simulation', () => {
           const order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.BUY,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.BUY,
+            type: OrderOptions.types.LIMIT,
             price: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
             quoteQuantity: chance.floating({ min: 10, max: 100 })
           })
@@ -71,8 +71,8 @@ describe('Exchanges: Simulation', () => {
           exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.BUY,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.BUY,
+            type: OrderOptions.types.LIMIT,
             price,
             quoteQuantity
           })
@@ -105,8 +105,8 @@ describe('Exchanges: Simulation', () => {
           exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.LIMIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.LIMIT,
             price: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
             baseQuantity
           })
@@ -141,8 +141,8 @@ describe('Exchanges: Simulation', () => {
         const order = exchange.createOrder({
           exchange: 'binance',
           market: market.symbol,
-          side: ExchangeOrder.sides.SELL,
-          type: ExchangeOrder.types.LIMIT,
+          side: OrderOptions.sides.SELL,
+          type: OrderOptions.types.LIMIT,
           price: 10000,
           baseQuantity: 1
         })

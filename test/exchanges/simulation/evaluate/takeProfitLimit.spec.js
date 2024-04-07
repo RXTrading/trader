@@ -1,7 +1,7 @@
 const { expect, Factory, chance, BigNumber } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
-const { Balance, ExchangeOrder } = require('../../../../lib/models')
+const { Balance, OrderOptions } = require('../../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   describe('#evaluate when type is TAKE_PROFIT_LIMIT', () => {
@@ -33,8 +33,8 @@ describe('Exchanges: Simulation', () => {
           order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.TAKE_PROFIT_LIMIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.TAKE_PROFIT_LIMIT,
             stopPrice,
             price,
             baseQuantity: chance.floating({ min: 10, max: 100 })
@@ -77,8 +77,8 @@ describe('Exchanges: Simulation', () => {
             const order = exchange.createOrder({
               exchange: 'binance',
               market: market.symbol,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.TAKE_PROFIT_LIMIT,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.TAKE_PROFIT_LIMIT,
               stopPrice,
               price,
               baseQuantity: chance.floating({ min: 10, max: 100 })
@@ -116,8 +116,8 @@ describe('Exchanges: Simulation', () => {
             exchange.createOrder({
               exchange: 'binance',
               market: market.symbol,
-              side: ExchangeOrder.sides.SELL,
-              type: ExchangeOrder.types.TAKE_PROFIT_LIMIT,
+              side: OrderOptions.sides.SELL,
+              type: OrderOptions.types.TAKE_PROFIT_LIMIT,
               stopPrice,
               price,
               baseQuantity
@@ -156,8 +156,8 @@ describe('Exchanges: Simulation', () => {
           const order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
-            side: ExchangeOrder.sides.SELL,
-            type: ExchangeOrder.types.TAKE_PROFIT_LIMIT,
+            side: OrderOptions.sides.SELL,
+            type: OrderOptions.types.TAKE_PROFIT_LIMIT,
             stopPrice,
             price,
             baseQuantity: chance.floating({ min: 10, max: 100 })
