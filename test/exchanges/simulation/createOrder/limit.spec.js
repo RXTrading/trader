@@ -1,4 +1,4 @@
-const { expect, Factory, behaviours, chance, BigNumber } = require('../../../helpers')
+const { expect, Factory, behaviours, chance, BigNumber, moment } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
 const { ExchangeOrder, OrderOptions, Market, Balance } = require('../../../../lib/models')
@@ -8,6 +8,7 @@ describe('Exchanges: Simulation', () => {
     describe('and base and quote quantity are within Market limits', () => {
       const market = Factory('market').build({ symbol: 'BTC/USDT' })
       const candle = {
+        timestamp: moment().utc().subtract(5, 'minutes').toDate(),
         open: chance.floating({ min: 30, max: 50 }),
         high: chance.floating({ min: 90, max: 100 }),
         low: chance.floating({ min: 10, max: 30 }),

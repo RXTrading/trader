@@ -1,4 +1,4 @@
-const { expect, Factory, behaviours, chance, BigNumber } = require('../../../helpers')
+const { expect, Factory, behaviours, chance, BigNumber, moment } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
 const { OrderOptions, Balance } = require('../../../../lib/models')
@@ -6,6 +6,7 @@ const { OrderOptions, Balance } = require('../../../../lib/models')
 describe('Exchanges: Simulation', () => {
   describe('#createOrder when type is MARKET', () => {
     const candle = {
+      timestamp: moment().utc().subtract(5, 'minutes').toDate(),
       open: chance.floating({ min: 30, max: 50 }),
       high: chance.floating({ min: 90, max: 100 }),
       low: chance.floating({ min: 10, max: 30 }),
@@ -87,6 +88,7 @@ describe('Exchanges: Simulation', () => {
           expect(order.status).to.eql('FILLED')
           expect(order.averagePrice).to.eql(trade.price)
           expect(order.trades.length).to.eql(1)
+          expect(order.closedAt).to.eql(candle.timestamp)
 
           expect(Number(trade.price)).to.be.least(BigNumber(low).toNumber())
           expect(Number(trade.price)).to.be.most(BigNumber(high).toNumber())
@@ -125,6 +127,7 @@ describe('Exchanges: Simulation', () => {
 
           exchange.setTick(10000)
           exchange.setCandle({
+            timestamp: moment().utc().subtract(5, 'minutes').toDate(),
             open: 95000,
             high: 11000,
             low: 9000,
@@ -160,6 +163,7 @@ describe('Exchanges: Simulation', () => {
 
           exchange.setTick(1)
           exchange.setCandle({
+            timestamp: moment().utc().subtract(5, 'minutes').toDate(),
             open: 0.95,
             high: 1.1,
             low: 0.9,
@@ -195,6 +199,7 @@ describe('Exchanges: Simulation', () => {
 
           exchange.setTick(1)
           exchange.setCandle({
+            timestamp: moment().utc().subtract(5, 'minutes').toDate(),
             open: 0.95,
             high: 1.10,
             low: 0.90,
@@ -230,6 +235,7 @@ describe('Exchanges: Simulation', () => {
 
           exchange.setTick(10)
           exchange.setCandle({
+            timestamp: moment().utc().subtract(5, 'minutes').toDate(),
             open: 9.5,
             high: 11.0,
             low: 9.0,

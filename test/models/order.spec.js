@@ -34,7 +34,8 @@ describe('Order Model', () => {
       quoteQuantityNet: chance.integer({ min: 1, max: 1000 }),
       price: chance.integer({ min: 1, max: 100 }),
       averagePrice: chance.integer({ min: 1, max: 100 }),
-      trades: []
+      trades: [],
+      closedAt: chance.date()
     }
 
     describe('id', () => {
@@ -677,6 +678,27 @@ describe('Order Model', () => {
         expect(model.trades).be.eql([])
       })
     })
+
+    describe('closedAt', () => {
+      behaviours.throwsValidationError('must be a date', {
+        check: () => (new Order({ ...defaultParams, closedAt: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('closedAt must be a Date')
+      })
+
+      describe('when status is FILLED', () => {
+        behaviours.throwsValidationError('is required', {
+          check: () => (new Order({ ...defaultParams, status: Order.statuses.FILLED, closedAt: undefined })),
+          expect: error => expect(error.data[0].message).to.eql('closedAt is required')
+        })
+      })
+
+      describe('when status is CANCELLED', () => {
+        behaviours.throwsValidationError('is required', {
+          check: () => (new Order({ ...defaultParams, status: Order.statuses.CANCELLED, closedAt: undefined })),
+          expect: error => expect(error.data[0].message).to.eql('closedAt is required')
+        })
+      })
+    })
   })
 
   describe('#fromExchangeOrder', () => {
@@ -691,7 +713,8 @@ describe('Order Model', () => {
         baseQuantityGross: '100',
         baseQuantityNet: '99.9',
         quoteQuantityGross: '1000',
-        quoteQuantityNet: '1000'
+        quoteQuantityNet: '1000',
+        closedAt: new Date()
       })
 
       const order = Order.fromExchangeOrder(exchangeOrder, { options: { quoteQuantity: 1000 } })
@@ -705,7 +728,8 @@ describe('Order Model', () => {
         baseQuantityGross: exchangeOrder.baseQuantityGross,
         baseQuantityNet: exchangeOrder.baseQuantityNet,
         quoteQuantityGross: exchangeOrder.quoteQuantityGross,
-        quoteQuantityNet: exchangeOrder.quoteQuantityNet
+        quoteQuantityNet: exchangeOrder.quoteQuantityNet,
+        closedAt: exchangeOrder.closedAt
       })
 
       expect(order.options).to.deep.include({

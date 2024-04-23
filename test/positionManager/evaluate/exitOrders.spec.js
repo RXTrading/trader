@@ -1,4 +1,4 @@
-const { expect, BigNumber, Factory, behaviours, sinon } = require('../../helpers')
+const { expect, BigNumber, Factory, behaviours, sinon, moment } = require('../../helpers')
 
 const PositionManager = require('../../../lib/positionManager')
 const { Balance, ExchangeOrder, OrderOptions } = require('../../../lib/models')
@@ -6,6 +6,7 @@ const Exchange = require('../../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
   describe('#evaluate exit orders', () => {
+    const timestamp = moment().utc().subtract(5, 'minutes').toDate()
     const market = Factory('market').build()
 
     describe('when position entry order is FILLED', () => {
@@ -24,7 +25,8 @@ describe('PositionManager', () => {
           baseQuantityGross: 100,
           baseQuantityNet: 99.9,
           quoteQuantityGross: 1000,
-          quoteQuantityNet: 1000
+          quoteQuantityNet: 1000,
+          closedAt: timestamp
         })
 
         entryOrder = Factory('orderFromExchangeOrder').build(exchangeOrder, { quoteQuantity: 1000 })
@@ -75,7 +77,7 @@ describe('PositionManager', () => {
 
             it('creates the exit orders', async () => {
               exchange.setTick(10)
-              exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+              exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
               try {
                 exchange.evaluate()
@@ -126,7 +128,7 @@ describe('PositionManager', () => {
             behaviours.throws('should throw an error', undefined, {
               check: async () => {
                 exchange.setTick(10)
-                exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+                exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
                 exchange.evaluate()
 
                 await manager.evaluate()
@@ -159,7 +161,7 @@ describe('PositionManager', () => {
 
             it('automaticaly sets baseQuantity to the baseQuantityNet of the entry', async () => {
               exchange.setTick(10)
-              exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+              exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
               exchange.evaluate()
               await manager.evaluate()
@@ -203,7 +205,7 @@ describe('PositionManager', () => {
 
             it('automaticaly sets last exits baseQuantity to any unallocated baseQuantityNet', async () => {
               exchange.setTick(10)
-              exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+              exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
               exchange.evaluate()
               await manager.evaluate()
@@ -252,7 +254,7 @@ describe('PositionManager', () => {
 
           it('does not create new orders', async () => {
             exchange.setTick(10)
-            exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+            exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
             exchange.evaluate()
 
@@ -291,7 +293,7 @@ describe('PositionManager', () => {
 
         it('does not create any exit orders', async () => {
           exchange.setTick(10)
-          exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+          exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
           exchange.evaluate()
 
@@ -364,7 +366,7 @@ describe('PositionManager', () => {
 
       it('does not create any exit orders', async () => {
         exchange.setTick(10)
-        exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+        exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
         exchange.evaluate()
 

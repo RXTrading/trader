@@ -1,12 +1,19 @@
-const { expect, Factory, chance, BigNumber } = require('../../../helpers')
+const { expect, Factory, chance, BigNumber, moment } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
 const { Balance, OrderOptions } = require('../../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   describe('#evaluate when type is STOP_LOSS_LIMIT', () => {
+    const timestamp = moment().utc().subtract(5, 'minutes').toDate()
+    const defaultCandle = {
+      timestamp,
+      open: 9,
+      high: 12,
+      low: 8,
+      close: 11
+    }
     const defaultTick = 10
-    const defaultCandle = { open: 9, high: 12, low: 8, close: 11 }
     const market = Factory('market').build({ symbol: 'BTC/USDT' })
     const stopPrice = chance.floating({ min: defaultCandle.low, max: defaultCandle.high })
     const price = 7
@@ -84,16 +91,19 @@ describe('Exchanges: Simulation', () => {
               baseQuantity: chance.floating({ min: 10, max: 100 })
             })
 
+            const timestamp = moment().utc().subtract(3, 'minutes').toDate()
+
             // First, let's mark stop price as hit
             exchange.evaluate()
 
             // Now we can evaluate the LIMIT order
-            exchange.setCandle({ open: 7, high: 10, low: 6, close: 9 })
+            exchange.setCandle({ timestamp, open: 7, high: 10, low: 6, close: 9 })
             exchange.evaluate()
 
             expect(order.status).to.eql('FILLED')
             expect(order.price).to.eql(order.trades[0].price)
             expect(order.trades.length).to.eql(1)
+            expect(order.closedAt).to.eql(timestamp)
           })
         })
 
@@ -131,7 +141,7 @@ describe('Exchanges: Simulation', () => {
             exchange.evaluate()
 
             // Now we can evaluate the LIMIT order
-            exchange.setCandle({ open: 7, high: 10, low: 6, close: 9 })
+            exchange.setCandle({ timestamp, open: 7, high: 10, low: 6, close: 9 })
             exchange.evaluate()
 
             expect(balance.used).to.eql('500')

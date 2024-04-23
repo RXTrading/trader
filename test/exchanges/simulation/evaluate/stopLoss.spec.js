@@ -1,4 +1,4 @@
-const { expect, Factory, chance, BigNumber } = require('../../../helpers')
+const { expect, Factory, chance, BigNumber, moment } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
 const { Balance, OrderOptions } = require('../../../../lib/models')
@@ -6,7 +6,13 @@ const { Balance, OrderOptions } = require('../../../../lib/models')
 describe('Exchanges: Simulation', () => {
   describe('#evaluate when type is STOP_LOSS', () => {
     const defaultTick = 10
-    const defaultCandle = { open: 9, high: 12, low: 8, close: 11 }
+    const defaultCandle = {
+      timestamp: moment().utc().subtract(5, 'minutes').toDate(),
+      open: 9,
+      high: 12,
+      low: 8,
+      close: 11
+    }
     const market = Factory('market').build({ symbol: 'BTC/USDT' })
     let exchange
 
@@ -107,6 +113,7 @@ describe('Exchanges: Simulation', () => {
           expect(order.status).to.eql('FILLED')
           expect(order.averagePrice).to.eql(trade.price)
           expect(order.trades.length).to.eql(1)
+          expect(order.closedAt).to.eql(defaultCandle.timestamp)
 
           expect(Number(trade.price)).to.be.least(Number(low))
           expect(Number(trade.price)).to.be.most(Number(high))

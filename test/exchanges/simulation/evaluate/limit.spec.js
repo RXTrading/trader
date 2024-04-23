@@ -1,4 +1,4 @@
-const { expect, Factory, chance, BigNumber } = require('../../../helpers')
+const { expect, Factory, chance, BigNumber, moment } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
 const { Balance, OrderOptions } = require('../../../../lib/models')
@@ -8,6 +8,7 @@ describe('Exchanges: Simulation', () => {
 
   describe('#evaluate when type is LIMIT', () => {
     const defaultCandle = {
+      timestamp: moment().utc().subtract(5, 'minutes').toDate(),
       open: chance.floating({ min: 30, max: 50 }),
       high: chance.floating({ min: 90, max: 100 }),
       low: chance.floating({ min: 10, max: 30 }),
@@ -47,6 +48,7 @@ describe('Exchanges: Simulation', () => {
           expect(order.status).to.eql('FILLED')
           expect(order.price).to.eql(trade.price)
           expect(order.trades.length).to.eql(1)
+          expect(order.closedAt).to.eql(defaultCandle.timestamp)
         })
       })
 

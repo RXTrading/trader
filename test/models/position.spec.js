@@ -747,24 +747,24 @@ describe('Position Model', () => {
       })
     })
 
-    describe('statistics', () => {
+    describe('metrics', () => {
       behaviours.throwsValidationError('must be an Object', {
-        check: () => (new Position({ ...defaultParams, statistics: chance.string() })),
-        expect: error => expect(error.data[0].message).to.eql('statistics must be an Object')
+        check: () => (new Position({ ...defaultParams, metrics: chance.string() })),
+        expect: error => expect(error.data[0].message).to.eql('metrics must be an Object')
       })
 
       it('defaults to an empty Object', () => {
-        const model = new Position({ ...defaultParams, statistics: undefined })
+        const model = new Position({ ...defaultParams, metrics: undefined })
 
         expect(model.orders).not.to.be.null()
-        expect(model.statistics).be.eql({})
+        expect(model.metrics).be.eql({})
       })
 
       describe('props', () => {
         describe('duration', () => {
           behaviours.throwsValidationError('must be a number', {
-            check: () => (new Position({ ...defaultParams, statistics: { duration: chance.string() } })),
-            expect: error => expect(error.data[0].message).to.eql('statistics.duration must be a number')
+            check: () => (new Position({ ...defaultParams, metrics: { duration: chance.string() } })),
+            expect: error => expect(error.data[0].message).to.eql('metrics.duration must be a number')
           })
         })
       })
@@ -813,21 +813,19 @@ describe('Position Model', () => {
     })
   })
 
-  describe('#set', () => {
-    describe('when position has createdAt and updatedAt', () => {
-      it('sets duration in statistics as milliseconds between timestamp and closedAt', () => {
-        const position = Factory('position').build({
-          timestamp: moment.utc().subtract(1, 'week').toDate()
-        })
-
-        expect(position.statistics.duration).to.be.undefined()
-
-        position.set({ status: Position.statuses.CLOSED, closedAt: moment.utc().toDate() })
-
-        const expected = moment.duration(moment(position.closedAt).diff(position.timestamp))
-
-        expect(position.statistics.duration).to.be.eql(expected.asMilliseconds())
+  describe('when position has createdAt and updatedAt', () => {
+    it('sets duration in metrics as milliseconds between timestamp and closedAt', () => {
+      const position = Factory('position').build({
+        timestamp: moment.utc().subtract(1, 'week').toDate()
       })
+
+      expect(position.metrics.duration).to.be.undefined()
+
+      position.set({ status: Position.statuses.CLOSED, closedAt: moment.utc().toDate() })
+
+      const expected = moment.duration(moment(position.closedAt).diff(position.timestamp))
+
+      expect(position.metrics.duration).to.be.eql(expected.asMilliseconds())
     })
   })
 
@@ -841,14 +839,16 @@ describe('Position Model', () => {
           side: OrderOptions.sides.BUY,
           status: Order.statuses.FILLED,
           baseQuantity: 100,
-          quoteQuantity: undefined
+          quoteQuantity: undefined,
+          closedAt: new Date()
         })
 
         const sellOrder = Factory('exchangeOrder').build({
           side: OrderOptions.sides.SELL,
           status: Order.statuses.FILLED,
           baseQuantity: 100,
-          quoteQuantity: undefined
+          quoteQuantity: undefined,
+          closedAt: new Date()
         })
 
         const orders = [
@@ -869,8 +869,18 @@ describe('Position Model', () => {
     describe('when type is LONG', () => {
       it('returns all SELL orders that have been filled', () => {
         const position = Factory('position').build({ type: Position.types.LONG })
-        const buyOrder = Factory('exchangeOrder').build({ side: OrderOptions.sides.BUY, status: Order.statuses.FILLED, baseQuantity: 100 })
-        const sellOrder = Factory('exchangeOrder').build({ side: OrderOptions.sides.SELL, status: Order.statuses.FILLED, baseQuantity: 100 })
+        const buyOrder = Factory('exchangeOrder').build({
+          side: OrderOptions.sides.BUY,
+          status: Order.statuses.FILLED,
+          baseQuantity: 100,
+          closedAt: new Date()
+        })
+        const sellOrder = Factory('exchangeOrder').build({
+          side: OrderOptions.sides.SELL,
+          status: Order.statuses.FILLED,
+          baseQuantity: 100,
+          closedAt: new Date()
+        })
         const orders = [
           Factory('orderFromExchangeOrder').build(buyOrder),
           Factory('orderFromExchangeOrder').build(sellOrder)

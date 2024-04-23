@@ -1,4 +1,4 @@
-const { expect, Factory, behaviours, BigNumber, chance, sinon } = require('../helpers')
+const { expect, Factory, behaviours, BigNumber, chance, sinon, moment } = require('../helpers')
 
 const PositionManager = require('../../lib/positionManager')
 const { Balance, Position, Order, OrderOptions } = require('../../lib/models')
@@ -24,7 +24,8 @@ describe('PositionManager', () => {
           baseQuantityGross: 100,
           baseQuantityNet: 99.9,
           quoteQuantityGross: 1000,
-          quoteQuantityNet: 1000
+          quoteQuantityNet: 1000,
+          closedAt: moment().utc().subtract(5, 'minutes').toDate()
         })
 
         exchangeOrders.push(exchangeOrder)
@@ -78,7 +79,7 @@ describe('PositionManager', () => {
         })
 
         exchange.setTick(20)
-        exchange.setCandle({ open: 12, high: 22, low: 10, close: 20 })
+        exchange.setCandle({ timestamp: new Date(), open: 12, high: 22, low: 10, close: 20 })
 
         trader = { on: () => {}, emitAsync: () => {}, exchange }
         traderEmitStub = sinon.stub(trader, 'emitAsync')
@@ -155,7 +156,7 @@ describe('PositionManager', () => {
           })
 
           exchange.setTick(200)
-          exchange.setCandle({ open: 150, high: 220, low: 100, close: 200 })
+          exchange.setCandle({ timestamp: new Date(), open: 150, high: 220, low: 100, close: 200 })
 
           return manager.closeAll()
         },

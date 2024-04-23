@@ -1,4 +1,4 @@
-const { expect, behaviours, chance, BigNumber } = require('../helpers')
+const { expect, behaviours, chance, BigNumber, moment } = require('../helpers')
 
 const Exchange = require('../../lib/exchanges/simulation')
 
@@ -29,7 +29,9 @@ describe('Exchanges: Simulation', () => {
 
   describe('#setCandle', () => {
     const exchange = new Exchange()
+    const timestamp = moment().utc().subtract(5, 'minutes').toDate()
     const defaultParams = {
+      timestamp,
       open: chance.floating({ min: 0.00, max: 10.00 }),
       high: chance.floating({ min: 0.00, max: 10.00 }),
       low: chance.floating({ min: 0.00, max: 10.00 }),
@@ -39,7 +41,7 @@ describe('Exchanges: Simulation', () => {
     describe('candle', () => {
       behaviours.throwsValidationError('is required', {
         check: () => exchange.setCandle(),
-        expect: error => expect(error.data[0].message).to.eql('candle.open is required')
+        expect: error => expect(error.data[0].message).to.eql('candle.timestamp is required')
       })
 
       behaviours.throwsValidationError('must be an object', {
@@ -48,6 +50,18 @@ describe('Exchanges: Simulation', () => {
       })
 
       describe('props', () => {
+        describe('timestamp', () => {
+          behaviours.throwsValidationError('is required', {
+            check: () => exchange.setCandle({ ...defaultParams, timestamp: undefined }),
+            expect: error => expect(error.data[0].message).to.eql('candle.timestamp is required')
+          })
+
+          behaviours.throwsValidationError('must be a date', {
+            check: () => exchange.setCandle({ ...defaultParams, timestamp: 'tomorrow' }),
+            expect: error => expect(error.data[0].message).to.eql('candle.timestamp must be a Date')
+          })
+        })
+
         describe('open', () => {
           behaviours.throwsValidationError('must be an object', {
             check: () => exchange.setCandle({ ...defaultParams, open: undefined }),
@@ -100,6 +114,7 @@ describe('Exchanges: Simulation', () => {
 
     it('sets the current candle', () => {
       const candle = {
+        timestamp,
         open: chance.floating({ min: 0.00, max: 10.00 }),
         high: chance.floating({ min: 0.00, max: 10.00 }),
         low: chance.floating({ min: 0.00, max: 10.00 }),
@@ -111,6 +126,7 @@ describe('Exchanges: Simulation', () => {
       exchange.setCandle(candle)
 
       expect(exchange.getCandle()).to.eql({
+        timestamp,
         open: BigNumber(candle.open).toFixed(),
         high: BigNumber(candle.high).toFixed(),
         low: BigNumber(candle.low).toFixed(),

@@ -1,12 +1,21 @@
 const _ = require('lodash')
 
-const { expect, Factory, behaviours, BigNumber, sinon, chance } = require('../helpers')
+const { expect, Factory, behaviours, BigNumber, sinon, chance, moment } = require('../helpers')
 
 const PositionManager = require('../../lib/positionManager')
 const { Balance, Position, Order, OrderOptions } = require('../../lib/models')
 const Exchange = require('../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
+  const defaultCandle = {
+    timestamp: moment().utc().subtract(5, 'minutes').toDate(),
+    open: 12,
+    high: 22,
+    low: 10,
+    close: 20
+  }
+  const defaultTick = chance.floating({ min: defaultCandle.low, max: defaultCandle.high })
+
   describe('#close', () => {
     describe('params', () => {
       let position
@@ -62,7 +71,8 @@ describe('PositionManager', () => {
             baseQuantityGross: 100,
             baseQuantityNet: 99.9,
             quoteQuantityGross: 1000,
-            quoteQuantityNet: 1000
+            quoteQuantityNet: 1000,
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           const positionOrder = Factory('orderFromExchangeOrder').build(exchangeOrder)
@@ -76,12 +86,10 @@ describe('PositionManager', () => {
             balances: [new Balance({ symbol: 'BTC', free: 99.9, used: 0, total: 99.9 })],
             orders: [exchangeOrder]
           })
-
-          exchange.setTick(20)
-          exchange.setCandle({ open: 12, high: 22, low: 10, close: 20 })
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
 
           const manager = new PositionManager({ trader: { on: () => {}, emitAsync: () => {}, exchange }, positions: [position] })
-
           await manager.close({ id: position.id })
 
           expect(position.status).to.eql(Position.statuses.CLOSING)
@@ -111,6 +119,8 @@ describe('PositionManager', () => {
             balances: [new Balance({ symbol: 'BTC', free: 99.9, used: 50, total: 99.9 })],
             orders: [exchangeOrder]
           })
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
 
           const manager = new PositionManager({ trader: { on: () => {}, emitAsync: () => {}, exchange }, positions: [position] })
 
@@ -157,7 +167,8 @@ describe('PositionManager', () => {
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
             quoteQuantityNet: '1000',
-            averagePrice: '10'
+            averagePrice: '10',
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           position.set({ orders: [existingOrder] })
@@ -167,8 +178,8 @@ describe('PositionManager', () => {
             balances: [new Balance({ symbol: 'BTC', free: 99.9, used: 0, total: 99.9 })]
           })
 
-          exchange.setTick(20)
-          exchange.setCandle({ open: 12, high: 22, low: 10, close: 20 })
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
 
           trader = { on: () => {}, emitAsync: () => {}, exchange }
           traderEmitStub = sinon.stub(trader, 'emitAsync')
@@ -251,7 +262,8 @@ describe('PositionManager', () => {
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
             quoteQuantityNet: '1000',
-            averagePrice: '10'
+            averagePrice: '10',
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           const sellOrder = new Order({
@@ -272,7 +284,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '99.9',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1998.0',
-            quoteQuantityNet: '1996.00' // 1996.002 after fees, rounded down
+            quoteQuantityNet: '1996.00', // 1996.002 after fees, rounded down
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           position.set({ orders: [buyOrder, sellOrder] })
@@ -282,8 +295,8 @@ describe('PositionManager', () => {
             balances: [new Balance({ symbol: 'BTC', free: 99.9, used: 0, total: 99.9 })]
           })
 
-          exchange.setTick(20)
-          exchange.setCandle({ open: 12, high: 22, low: 10, close: 20 })
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
         })
 
         it('does not create an offset order', async () => {
@@ -313,7 +326,8 @@ describe('PositionManager', () => {
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
             quoteQuantityNet: '1000',
-            averagePrice: '10'
+            averagePrice: '10',
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           const sellOrder = new Order({
@@ -334,7 +348,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '99.8991',
             baseQuantityNet: '99.8991',
             quoteQuantityGross: '1997.98', // 1997.982, Rounded down
-            quoteQuantityNet: '1995.98' // 1995.984018 after fees, rounded down
+            quoteQuantityNet: '1995.98', // 1995.984018 after fees, rounded down
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           position.set({ orders: [buyOrder, sellOrder] })
@@ -344,8 +359,8 @@ describe('PositionManager', () => {
             balances: [new Balance({ symbol: 'BTC', free: 99.9, used: 0, total: 99.9 })]
           })
 
-          exchange.setTick(20)
-          exchange.setCandle({ open: 12, high: 22, low: 10, close: 20 })
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
         })
 
         it('does not create an offset order', async () => {
@@ -375,7 +390,8 @@ describe('PositionManager', () => {
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
             quoteQuantityNet: '1000',
-            averagePrice: '10'
+            averagePrice: '10',
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           const sellOrder = new Order({
@@ -396,7 +412,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '99.89',
             baseQuantityNet: '99.89',
             quoteQuantityGross: '1997.8',
-            quoteQuantityNet: '1995.80' // 1995.8022 after fees, rounded down
+            quoteQuantityNet: '1995.80', // 1995.8022 after fees, rounded down
+            closedAt: moment().utc().subtract(5, 'minutes').toDate()
           })
 
           position.set({ orders: [buyOrder, sellOrder] })
@@ -406,8 +423,8 @@ describe('PositionManager', () => {
             balances: [new Balance({ symbol: 'BTC', free: 99.9, used: 0, total: 99.9 })]
           })
 
-          exchange.setTick(20)
-          exchange.setCandle({ open: 12, high: 22, low: 10, close: 20 })
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
         })
 
         it('does not create an offset order', async () => {

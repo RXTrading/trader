@@ -19,7 +19,8 @@ module.exports = Factory => {
         'baseQuantityNet',
         'quoteQuantityGross',
         'quoteQuantityNet',
-        'trades'
+        'trades',
+        'closedAt'
       ])
     })
   })
