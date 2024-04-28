@@ -1,11 +1,13 @@
-const { expect, Factory, behaviours, chance, BigNumber } = require('../../../helpers')
+const { expect, Factory, behaviours, chance, BigNumber, moment } = require('../../../helpers')
 
 const Exchange = require('../../../../lib/exchanges/simulation')
 const { ExchangeOrder, OrderOptions, Market, Balance } = require('../../../../lib/models')
 
 describe('Exchanges: Simulation', () => {
   describe('#createOrder when type is STOP_LOSS', () => {
+    const timestamp = moment().utc().subtract(5, 'minutes').toDate()
     const candle = {
+      timestamp,
       open: chance.floating({ min: 30, max: 50 }),
       high: chance.floating({ min: 90, max: 100 }),
       low: chance.floating({ min: 10, max: 30 }),
@@ -73,7 +75,7 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
 
         exchange.setTick(1)
-        exchange.setCandle({ open: 0.9, high: 1.2, low: 0.8, close: 1.1 })
+        exchange.setCandle({ timestamp, open: 0.9, high: 1.2, low: 0.8, close: 1.1 })
       })
 
       behaviours.throwsValidationError('throws an error', {
@@ -104,7 +106,7 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
 
         exchange.setTick(1)
-        exchange.setCandle({ open: 0.9, high: 1.2, low: 0.8, close: 1.1 })
+        exchange.setCandle({ timestamp, open: 0.9, high: 1.2, low: 0.8, close: 1.1 })
       })
 
       behaviours.throwsValidationError('throws an error', {
@@ -135,7 +137,7 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
 
         exchange.setTick(1)
-        exchange.setCandle({ open: 0.9, high: 1.2, low: 0.8, close: 1.1 })
+        exchange.setCandle({ timestamp, open: 0.9, high: 1.2, low: 0.8, close: 1.1 })
       })
 
       behaviours.throwsValidationError('throws an error', {
@@ -171,7 +173,7 @@ describe('Exchanges: Simulation', () => {
         exchange = new Exchange({ markets: [market], balances })
 
         exchange.setTick(100)
-        exchange.setCandle({ open: 90, high: 120, low: 80, close: 110 })
+        exchange.setCandle({ timestamp, open: 90, high: 120, low: 80, close: 110 })
       })
 
       behaviours.throwsValidationError('throws an error', {

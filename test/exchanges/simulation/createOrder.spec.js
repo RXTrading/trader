@@ -1,4 +1,4 @@
-const { expect, Factory, behaviours, chance, BigNumber } = require('../../helpers')
+const { expect, Factory, behaviours, chance, BigNumber, moment } = require('../../helpers')
 
 const Exchange = require('../../../lib/exchanges/simulation')
 const { OrderOptions } = require('../../../lib/models')
@@ -109,6 +109,8 @@ describe('Exchanges: Simulation', () => {
     })
 
     describe('when order is valid', () => {
+      const timestamp = moment().utc().subtract(5, 'minutes').toDate()
+
       it('creates MARKET orders', () => {
         const exchange = new Exchange({
           markets: [Factory('market').build({ symbol: 'BTC/USDT' })],
@@ -124,7 +126,7 @@ describe('Exchanges: Simulation', () => {
         })
 
         exchange.setTick(1)
-        exchange.setCandle({ open: 0.95, high: 1.1, low: 0.9, close: 1.05 })
+        exchange.setCandle({ timestamp, open: 0.95, high: 1.1, low: 0.9, close: 1.05 })
 
         expect(exchange.getOrders().length).to.eql(0)
 
@@ -182,7 +184,7 @@ describe('Exchanges: Simulation', () => {
         })
 
         exchange.setTick(1)
-        exchange.setCandle({ open: 0.95, high: 1.1, low: 0.9, close: 1.05 })
+        exchange.setCandle({ timestamp, open: 0.95, high: 1.1, low: 0.9, close: 1.05 })
 
         expect(exchange.getOrders().length).to.eql(0)
 
@@ -241,7 +243,7 @@ describe('Exchanges: Simulation', () => {
         })
 
         exchange.setTick(1)
-        exchange.setCandle({ open: 0.95, high: 1.1, low: 0.9, close: 1.05 })
+        exchange.setCandle({ timestamp, open: 0.95, high: 1.1, low: 0.9, close: 1.05 })
 
         expect(exchange.getOrders().length).to.eql(0)
 

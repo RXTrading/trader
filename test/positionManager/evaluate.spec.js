@@ -1,4 +1,4 @@
-const { expect, BigNumber, Factory, sinon, chance } = require('../helpers')
+const { expect, BigNumber, Factory, sinon, moment } = require('../helpers')
 
 const PositionManager = require('../../lib/positionManager')
 const { Balance, Position, OrderOptions, Order } = require('../../lib/models')
@@ -6,6 +6,8 @@ const Exchange = require('../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
   describe('#evaluate', () => {
+    const timestamp = new Date()
+
     describe('order updates', () => {
       let manager
       let exchange
@@ -32,7 +34,7 @@ describe('PositionManager', () => {
 
       it('updates position orders from exchange orders', async () => {
         exchange.setTick(10)
-        exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+        exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
         exchange.evaluate()
         await manager.evaluate()
@@ -43,7 +45,8 @@ describe('PositionManager', () => {
           baseQuantityGross: '100',
           baseQuantityNet: '99.9',
           quoteQuantityGross: '1000',
-          quoteQuantityNet: '1000'
+          quoteQuantityNet: '1000',
+          closedAt: timestamp
         })
       })
     })
@@ -67,7 +70,8 @@ describe('PositionManager', () => {
               baseQuantityGross: '100',
               baseQuantityNet: '99.9',
               quoteQuantityGross: '1000',
-              quoteQuantityNet: '1000'
+              quoteQuantityNet: '1000',
+              closedAt: moment().subtract(5, 'days').toDate()
             },
             {
               status: Order.statuses.FILLED,
@@ -79,7 +83,8 @@ describe('PositionManager', () => {
               baseQuantityGross: '50',
               baseQuantityNet: '50',
               quoteQuantityGross: '1000',
-              quoteQuantityNet: '999'
+              quoteQuantityNet: '999',
+              closedAt: moment().subtract(1, 'day').toDate()
             }
           ]
 
@@ -111,7 +116,7 @@ describe('PositionManager', () => {
           expect(position.status).to.eql(Position.statuses.OPEN)
 
           exchange.setTick(20)
-          exchange.setCandle({ open: 19, high: 22, low: 18, close: 21 })
+          exchange.setCandle({ timestamp, open: 19, high: 22, low: 18, close: 21 })
 
           exchange.evaluate()
           await manager.evaluate()
@@ -129,6 +134,7 @@ describe('PositionManager', () => {
 
           const orderParams = [
             {
+              timestamp: moment().subtract(5, 'days').subtract(10, 'minutes').toDate(),
               status: Order.statuses.FILLED,
               type: OrderOptions.types.LIMIT,
               price: 10,
@@ -137,9 +143,11 @@ describe('PositionManager', () => {
               baseQuantityGross: '100',
               baseQuantityNet: '99.9',
               quoteQuantityGross: '1000',
-              quoteQuantityNet: '1000'
+              quoteQuantityNet: '1000',
+              closedAt: moment().subtract(5, 'days').toDate()
             },
             {
+              timestamp: moment().subtract(5, 'days').subtract(5, 'minutes').toDate(),
               status: Order.statuses.FILLED,
               side: OrderOptions.sides.SELL,
               type: OrderOptions.types.LIMIT,
@@ -149,7 +157,8 @@ describe('PositionManager', () => {
               baseQuantityGross: '99.9',
               baseQuantityNet: '99.9',
               quoteQuantityGross: '2000',
-              quoteQuantityNet: '1998'
+              quoteQuantityNet: '1998',
+              closedAt: moment().subtract(1, 'day').toDate()
             }
           ]
 
@@ -177,7 +186,7 @@ describe('PositionManager', () => {
           manager = new PositionManager({ trader: { on: () => {}, emitAsync: () => {}, exchange }, positions: [position] })
 
           exchange.setTick(20)
-          exchange.setCandle({ open: 19, high: 22, low: 18, close: 21 })
+          exchange.setCandle({ timestamp, open: 19, high: 22, low: 18, close: 21 })
 
           exchange.evaluate()
         })
@@ -186,15 +195,7 @@ describe('PositionManager', () => {
           await manager.evaluate()
 
           expect(position.status).to.eql(Position.statuses.CLOSED)
-        })
-
-        describe('and params contains timestamp', () => {
-          it('sets closedAt to the timestamp param', async () => {
-            const timestamp = chance.date()
-            await manager.evaluate({ timestamp })
-
-            expect(position.closedAt).to.eql(timestamp)
-          })
+          expect(position.closedAt).to.eql(position.orders[1].closedAt)
         })
       })
     })
@@ -217,7 +218,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
-            quoteQuantityNet: '1000'
+            quoteQuantityNet: '1000',
+            closedAt: moment().subtract(5, 'days').toDate()
           })
 
           const positionOrder = Factory('orderFromExchangeOrder').build(exchangeOrder)
@@ -236,7 +238,7 @@ describe('PositionManager', () => {
 
         it('correctly calculates unrealized PnL', async () => {
           exchange.setTick(20)
-          exchange.setCandle({ open: 19, high: 22, low: 18, close: 21 })
+          exchange.setCandle({ timestamp, open: 19, high: 22, low: 18, close: 21 })
 
           exchange.evaluate()
           await manager.evaluate()
@@ -264,7 +266,8 @@ describe('PositionManager', () => {
               baseQuantityGross: '100',
               baseQuantityNet: '99.9',
               quoteQuantityGross: '1000',
-              quoteQuantityNet: '1000'
+              quoteQuantityNet: '1000',
+              closedAt: moment().subtract(5, 'days').toDate()
             },
             {
               status: Order.statuses.FILLED,
@@ -276,7 +279,8 @@ describe('PositionManager', () => {
               baseQuantityGross: '99.9',
               baseQuantityNet: '99.9',
               quoteQuantityGross: '2000',
-              quoteQuantityNet: '1998'
+              quoteQuantityNet: '1998',
+              closedAt: moment().subtract(1, 'day').toDate()
             }
           ]
 
@@ -306,7 +310,7 @@ describe('PositionManager', () => {
 
         it('sets unrealized PnL to zero', async () => {
           exchange.setTick(10)
-          exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+          exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
           exchange.evaluate()
           await manager.evaluate()
@@ -336,7 +340,8 @@ describe('PositionManager', () => {
               baseQuantityGross: '100',
               baseQuantityNet: '99.9',
               quoteQuantityGross: '1000',
-              quoteQuantityNet: '1000'
+              quoteQuantityNet: '1000',
+              closedAt: moment().subtract(5, 'days').toDate()
             },
             {
               status: Order.statuses.FILLED,
@@ -348,7 +353,8 @@ describe('PositionManager', () => {
               baseQuantityGross: '99.9',
               baseQuantityNet: '99.9',
               quoteQuantityGross: '2000',
-              quoteQuantityNet: '1998'
+              quoteQuantityNet: '1998',
+              closedAt: moment().subtract(1, 'day').toDate()
             }
           ]
 
@@ -378,7 +384,7 @@ describe('PositionManager', () => {
 
         it('correctly calculates realized PnL', async () => {
           exchange.setTick(10)
-          exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+          exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
           exchange.evaluate()
           await manager.evaluate()
@@ -405,7 +411,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
-            quoteQuantityNet: '1000'
+            quoteQuantityNet: '1000',
+            closedAt: moment().subtract(5, 'days').toDate()
           })
 
           const positionOrder = Factory('orderFromExchangeOrder').build(exchangeOrder)
@@ -424,7 +431,7 @@ describe('PositionManager', () => {
 
         it('sets realized PnL to 0', async () => {
           exchange.setTick(15)
-          exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+          exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
           exchange.evaluate()
           await manager.evaluate()
@@ -453,7 +460,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
-            quoteQuantityNet: '1000'
+            quoteQuantityNet: '1000',
+            closedAt: moment().subtract(5, 'days').toDate()
           },
           {
             status: Order.statuses.FILLED,
@@ -465,7 +473,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '50',
             baseQuantityNet: '50',
             quoteQuantityGross: '750',
-            quoteQuantityNet: '749.25'
+            quoteQuantityNet: '749.25',
+            closedAt: moment().subtract(1, 'day').toDate()
           }
         ]
 
@@ -496,15 +505,15 @@ describe('PositionManager', () => {
 
       it('correctly calculates PnL from realized and unrealized PnL', async () => {
         exchange.setTick(20)
-        exchange.setCandle({ open: 19, high: 22, low: 18, close: 21 })
+        exchange.setCandle({ timestamp, open: 19, high: 22, low: 18, close: 21 })
 
         exchange.evaluate()
         await manager.evaluate()
 
         expect(position.realizedPnL).to.eql(BigNumber(-250.75).toFixed())
-        expect(position.realizedPnLPercent).to.eql(BigNumber(-25.07).toFixed())
+        expect(position.realizedPnLPercent).to.eql(BigNumber(-25.075).toFixed())
         expect(position.unrealizedPnL).to.eql(BigNumber(747.25).toFixed())
-        expect(position.unrealizedPnLPercent).to.eql(BigNumber(74.72).toFixed())
+        expect(position.unrealizedPnLPercent).to.eql(BigNumber(74.725).toFixed())
       })
     })
 
@@ -528,7 +537,8 @@ describe('PositionManager', () => {
                 baseQuantityGross: '100',
                 baseQuantityNet: '99.9',
                 quoteQuantityGross: '1000',
-                quoteQuantityNet: '1000'
+                quoteQuantityNet: '1000',
+                closedAt: moment().subtract(5, 'days').toDate()
               },
               {
                 status: Order.statuses.OPEN,
@@ -565,18 +575,18 @@ describe('PositionManager', () => {
 
           it('sets win to true', async () => {
             exchange.setTick(20)
-            exchange.setCandle({ open: 19, high: 22, low: 18, close: 21 })
+            exchange.setCandle({ timestamp, open: 19, high: 22, low: 18, close: 21 })
 
             exchange.evaluate()
             await manager.evaluate()
 
             expect(position.status).to.eql(Position.statuses.CLOSED)
             expect(position.realizedPnL).to.eql(BigNumber(996.01).toFixed())
-            expect(position.realizedPnLPercent).to.eql(BigNumber(99.6).toFixed())
+            expect(position.realizedPnLPercent).to.eql(BigNumber(99.601).toFixed())
             expect(position.unrealizedPnL).to.eql(BigNumber(0).toFixed())
             expect(position.unrealizedPnLPercent).to.eql(BigNumber(0).toFixed())
             expect(position.pnl).to.eql(BigNumber(996.01).toFixed())
-            expect(position.pnlPercent).to.eql(BigNumber(99.6).toFixed())
+            expect(position.pnlPercent).to.eql(BigNumber(99.601).toFixed())
             expect(position.win).to.eql(true)
           })
         })
@@ -599,7 +609,8 @@ describe('PositionManager', () => {
                 baseQuantityGross: '100',
                 baseQuantityNet: '99.9',
                 quoteQuantityGross: '1000',
-                quoteQuantityNet: '1000'
+                quoteQuantityNet: '1000',
+                closedAt: moment().subtract(5, 'days').toDate()
               },
               {
                 status: Order.statuses.OPEN,
@@ -636,7 +647,7 @@ describe('PositionManager', () => {
 
           it('sets win to false', async () => {
             exchange.setTick(10.01)
-            exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+            exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
             exchange.evaluate()
             await manager.evaluate()
@@ -671,7 +682,8 @@ describe('PositionManager', () => {
                 baseQuantityGross: '100',
                 baseQuantityNet: '99.9',
                 quoteQuantityGross: '1000',
-                quoteQuantityNet: '1000'
+                quoteQuantityNet: '1000',
+                closedAt: moment().subtract(5, 'days').toDate()
               },
               {
                 status: Order.statuses.OPEN,
@@ -708,18 +720,18 @@ describe('PositionManager', () => {
 
           it('sets win to false', async () => {
             exchange.setTick(8.75)
-            exchange.setCandle({ open: 9, high: 12, low: 8, close: 11 })
+            exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
             exchange.evaluate()
             await manager.evaluate()
 
             expect(position.status).to.eql(Position.statuses.CLOSED)
             expect(position.realizedPnL).to.eql(BigNumber(-126.74).toFixed())
-            expect(position.realizedPnLPercent).to.eql(BigNumber(-12.67).toFixed())
+            expect(position.realizedPnLPercent).to.eql(BigNumber(-12.674).toFixed())
             expect(position.unrealizedPnL).to.eql(BigNumber(0).toFixed())
             expect(position.unrealizedPnLPercent).to.eql(BigNumber(0).toFixed())
             expect(position.pnl).to.eql(BigNumber(-126.74).toFixed())
-            expect(position.pnlPercent).to.eql(BigNumber(-12.67).toFixed())
+            expect(position.pnlPercent).to.eql(BigNumber(-12.674).toFixed())
             expect(position.win).to.eql(false)
           })
         })
@@ -742,7 +754,8 @@ describe('PositionManager', () => {
             baseQuantityGross: '100',
             baseQuantityNet: '99.9',
             quoteQuantityGross: '1000',
-            quoteQuantityNet: '1000'
+            quoteQuantityNet: '1000',
+            closedAt: moment().subtract(5, 'days').toDate()
           })
 
           const positionOrder = Factory('orderFromExchangeOrder').build(exchangeOrder)
@@ -761,7 +774,7 @@ describe('PositionManager', () => {
 
         it('sets win to null', async () => {
           exchange.setTick(20)
-          exchange.setCandle({ open: 19, high: 22, low: 18, close: 21 })
+          exchange.setCandle({ timestamp, open: 19, high: 22, low: 18, close: 21 })
 
           exchange.evaluate()
           await manager.evaluate()
@@ -810,7 +823,7 @@ describe('PositionManager', () => {
 
       it('emits position.updated for each evaluated position', async () => {
         exchange.setTick(20)
-        exchange.setCandle({ open: 19, high: 22, low: 18, close: 21 })
+        exchange.setCandle({ timestamp, open: 19, high: 22, low: 18, close: 21 })
 
         exchange.evaluate()
         await manager.evaluate()
