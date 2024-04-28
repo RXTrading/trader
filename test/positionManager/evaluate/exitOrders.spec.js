@@ -320,12 +320,12 @@ describe('PositionManager', () => {
           side: OrderOptions.sides.BUY,
           type: OrderOptions.types.LIMIT,
           price: 5,
-          averagePrice: 10,
+          averagePrice: 0,
           quoteQuantity: 1000,
-          baseQuantityGross: 100,
-          baseQuantityNet: 99.9,
-          quoteQuantityGross: 1000,
-          quoteQuantityNet: 1000
+          baseQuantityGross: 0,
+          baseQuantityNet: 0,
+          quoteQuantityGross: 0,
+          quoteQuantityNet: 0
         })
 
         const entryOrder = Factory('orderFromExchangeOrder').build(exchangeOrder)

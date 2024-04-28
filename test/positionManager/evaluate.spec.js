@@ -134,6 +134,7 @@ describe('PositionManager', () => {
 
           const orderParams = [
             {
+              timestamp: moment().subtract(5, 'days').subtract(10, 'minutes').toDate(),
               status: Order.statuses.FILLED,
               type: OrderOptions.types.LIMIT,
               price: 10,
@@ -146,6 +147,7 @@ describe('PositionManager', () => {
               closedAt: moment().subtract(5, 'days').toDate()
             },
             {
+              timestamp: moment().subtract(5, 'days').subtract(5, 'minutes').toDate(),
               status: Order.statuses.FILLED,
               side: OrderOptions.sides.SELL,
               type: OrderOptions.types.LIMIT,
@@ -193,6 +195,7 @@ describe('PositionManager', () => {
           await manager.evaluate()
 
           expect(position.status).to.eql(Position.statuses.CLOSED)
+          expect(position.closedAt).to.eql(position.orders[1].closedAt)
         })
       })
     })

@@ -17,14 +17,14 @@ describe('Exchanges: Simulation', () => {
     const market = Factory('market').build({ symbol: 'BTC/USDT' })
 
     describe('params', () => {
-      const exchange = new Exchange()
-
-      before(() => {
-        exchange.setTick(defaultTick)
-        exchange.setCandle(defaultCandle)
-      })
-
       describe('id', () => {
+        const exchange = new Exchange()
+
+        before(() => {
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
+        })
+
         behaviours.throwsValidationError('is required', {
           check: () => exchange.cancelOrder(),
           expect: error => expect(error.data[0].message).to.eql('id is required')
@@ -38,6 +38,32 @@ describe('Exchanges: Simulation', () => {
         behaviours.throwsValidationError('order exist', {
           check: () => exchange.cancelOrder({ id: chance.guid() }),
           expect: error => expect(error.data[0].message).to.eql('order does not exist')
+        })
+      })
+
+      describe('timestamp', () => {
+        let exchange
+        let order
+
+        before(() => {
+          const balances = [Factory('balance').build({ symbol: 'USDT', free: 1000, used: 200, total: 1000 })]
+
+          order = Factory('exchangeOrder').build({
+            type: OrderOptions.types.LIMIT,
+            side: OrderOptions.sides.BUY,
+            status: ExchangeOrder.statuses.OPEN,
+            quoteQuantity: 100,
+            price: chance.floating({ min: 1, max: 100 })
+          })
+
+          exchange = new Exchange({ markets: [market], balances, orders: [order] })
+          exchange.setTick(defaultTick)
+          exchange.setCandle(defaultCandle)
+        })
+
+        behaviours.throwsValidationError('must be a date', {
+          check: () => exchange.cancelOrder({ id: order.id, timestamp: chance.string() }),
+          expect: error => expect(error.data[0].message).to.eql('timestamp must be a Date')
         })
       })
     })
@@ -119,20 +145,41 @@ describe('Exchanges: Simulation', () => {
       })
 
       describe('closedAt', () => {
-        it('is set to current candle timestamp', () => {
-          const balances = [Factory('balance').build({ symbol: 'USDT', free: 1000, total: 1000 })]
-          const order = Factory('exchangeOrder').build({
-            type: OrderOptions.types.LIMIT,
-            side: OrderOptions.sides.BUY,
-            quoteQuantity: 100,
-            price: chance.floating({ min: 1, max: 100 })
-          })
-          const exchange = new Exchange({ markets: [market], balances, orders: [order] })
-          exchange.setTick(defaultTick)
-          exchange.setCandle(defaultCandle)
-          exchange.cancelOrder({ id: order.id })
+        describe('when order params contains timestamp', () => {
+          it('uses timestamp for closedAt', () => {
+            const timestamp = moment().utc().add('1', 'minute').toDate()
+            const balances = [Factory('balance').build({ symbol: 'USDT', free: 1000, total: 1000 })]
+            const order = Factory('exchangeOrder').build({
+              type: OrderOptions.types.LIMIT,
+              side: OrderOptions.sides.BUY,
+              quoteQuantity: 100,
+              price: chance.floating({ min: 1, max: 100 })
+            })
+            const exchange = new Exchange({ markets: [market], balances, orders: [order] })
+            exchange.setTick(defaultTick)
+            exchange.setCandle(defaultCandle)
+            exchange.cancelOrder({ id: order.id, timestamp })
 
-          expect(order.closedAt).to.eql(defaultCandle.timestamp)
+            expect(order.closedAt).to.eql(timestamp)
+          })
+        })
+
+        describe('when order params does not contain timestamp', () => {
+          it('is set to current candle timestamp', () => {
+            const balances = [Factory('balance').build({ symbol: 'USDT', free: 1000, total: 1000 })]
+            const order = Factory('exchangeOrder').build({
+              type: OrderOptions.types.LIMIT,
+              side: OrderOptions.sides.BUY,
+              quoteQuantity: 100,
+              price: chance.floating({ min: 1, max: 100 })
+            })
+            const exchange = new Exchange({ markets: [market], balances, orders: [order] })
+            exchange.setTick(defaultTick)
+            exchange.setCandle(defaultCandle)
+            exchange.cancelOrder({ id: order.id })
+
+            expect(order.closedAt).to.eql(defaultCandle.timestamp)
+          })
         })
       })
     })

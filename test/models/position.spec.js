@@ -829,9 +829,9 @@ describe('Position Model', () => {
     })
   })
 
-  describe('#findFilledEntryOrders', () => {
+  describe('#findClosedEntryOrders', () => {
     describe('when type is LONG', () => {
-      it('returns all BUY orders that have been filled', () => {
+      it('returns all BUY orders that have been closed', () => {
         const position = Factory('position').build({ type: Position.types.LONG })
 
         const buyOrder = Factory('exchangeOrder').build({
@@ -858,16 +858,16 @@ describe('Position Model', () => {
 
         position.set({ orders })
 
-        const filledEntryOrders = position.findFilledEntryOrders()
+        const filledEntryOrders = position.findClosedEntryOrders()
 
         expect(filledEntryOrders).to.eql([orders[0]])
       })
     })
   })
 
-  describe('#findFilledExitOrders', () => {
+  describe('#findClosedExitOrders', () => {
     describe('when type is LONG', () => {
-      it('returns all SELL orders that have been filled', () => {
+      it('returns all SELL orders that have been closed', () => {
         const position = Factory('position').build({ type: Position.types.LONG })
         const buyOrder = Factory('exchangeOrder').build({
           side: OrderOptions.sides.BUY,
@@ -888,7 +888,7 @@ describe('Position Model', () => {
 
         position.set({ orders })
 
-        const filledExitOrders = position.findFilledExitOrders()
+        const filledExitOrders = position.findClosedExitOrders()
 
         expect(filledExitOrders).to.eql([orders[1]])
       })

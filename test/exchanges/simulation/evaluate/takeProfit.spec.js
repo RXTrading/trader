@@ -46,25 +46,6 @@ describe('Exchanges: Simulation', () => {
 
           expect(order.stopPriceHit).to.eql(true)
         })
-
-        it('does not execute the MARKET order', () => {
-          const order = exchange.createOrder({
-            exchange: 'binance',
-            market: market.symbol,
-            side: OrderOptions.sides.SELL,
-            type: OrderOptions.types.TAKE_PROFIT,
-            stopPrice: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
-            baseQuantity: chance.floating({ min: 10, max: 100 })
-          })
-
-          exchange.evaluate()
-
-          expect(order.status).to.eql('OPEN')
-          expect(order.baseQuantityGross).to.eql('0')
-          expect(order.baseQuantityNet).to.eql('0')
-          expect(order.quoteQuantityGross).to.eql('0')
-          expect(order.quoteQuantityNet).to.eql('0')
-        })
       })
     })
 
@@ -83,10 +64,6 @@ describe('Exchanges: Simulation', () => {
         })
 
         it('emulates MARKET order with slippage', () => {
-          const nextTick = 10.09
-
-          exchange.setCandle(defaultCandle)
-
           const order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
@@ -96,13 +73,7 @@ describe('Exchanges: Simulation', () => {
             baseQuantity: chance.floating({ min: 10, max: 100 })
           })
 
-          // First, let's mark stop price as hit
-          exchange.evaluate()
-
-          expect(order.stopPriceHit).to.eql(true)
-          expect(order.averagePrice).to.eql('0')
-
-          // Now we can evaluate the market order
+          const nextTick = 10.09
           exchange.setTick(nextTick)
           exchange.evaluate()
 

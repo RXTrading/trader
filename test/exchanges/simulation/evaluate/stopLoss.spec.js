@@ -46,25 +46,6 @@ describe('Exchanges: Simulation', () => {
 
           expect(order.stopPriceHit).to.eql(true)
         })
-
-        it('does not execute the MARKET order', () => {
-          const order = exchange.createOrder({
-            exchange: 'binance',
-            market: market.symbol,
-            side: OrderOptions.sides.SELL,
-            type: OrderOptions.types.STOP_LOSS,
-            stopPrice: chance.floating({ min: defaultCandle.low, max: defaultCandle.high }),
-            baseQuantity: chance.floating({ min: 10, max: 100 })
-          })
-
-          exchange.evaluate()
-
-          expect(order.status).to.eql('OPEN')
-          expect(order.baseQuantityGross).to.eql('0')
-          expect(order.baseQuantityNet).to.eql('0')
-          expect(order.quoteQuantityGross).to.eql('0')
-          expect(order.quoteQuantityNet).to.eql('0')
-        })
       })
     })
 
@@ -83,10 +64,6 @@ describe('Exchanges: Simulation', () => {
         })
 
         it('emulates MARKET order with slippage', () => {
-          const nextTick = 10.09
-
-          exchange.setCandle(defaultCandle)
-
           const order = exchange.createOrder({
             exchange: 'binance',
             market: market.symbol,
@@ -96,13 +73,8 @@ describe('Exchanges: Simulation', () => {
             baseQuantity: chance.floating({ min: 10, max: 100 })
           })
 
-          // First, let's mark stop price as hit
-          exchange.evaluate()
+          const nextTick = 10.09
 
-          expect(order.stopPriceHit).to.eql(true)
-          expect(order.averagePrice).to.eql('0')
-
-          // Now we can evaluate the market order
           exchange.setTick(nextTick)
           exchange.evaluate()
 
@@ -111,6 +83,7 @@ describe('Exchanges: Simulation', () => {
           const low = BigNumber(nextTick).multipliedBy(0.999).toFixed(2, BigNumber.ROUND_DOWN)
 
           expect(order.status).to.eql('FILLED')
+          expect(order.stopPriceHit).to.eql(true)
           expect(order.averagePrice).to.eql(trade.price)
           expect(order.trades.length).to.eql(1)
           expect(order.closedAt).to.eql(defaultCandle.timestamp)

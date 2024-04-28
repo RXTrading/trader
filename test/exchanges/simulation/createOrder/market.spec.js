@@ -88,7 +88,7 @@ describe('Exchanges: Simulation', () => {
           expect(order.status).to.eql('FILLED')
           expect(order.averagePrice).to.eql(trade.price)
           expect(order.trades.length).to.eql(1)
-          expect(order.closedAt).to.eql(candle.timestamp)
+          expect(order.closedAt).to.eql(order.timestamp)
 
           expect(Number(trade.price)).to.be.least(BigNumber(low).toNumber())
           expect(Number(trade.price)).to.be.most(BigNumber(high).toNumber())
