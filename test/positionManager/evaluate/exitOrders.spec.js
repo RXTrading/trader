@@ -1,7 +1,7 @@
 const { expect, BigNumber, Factory, behaviours, sinon, moment } = require('../../helpers')
 
 const PositionManager = require('../../../lib/positionManager')
-const { Balance, ExchangeOrder, OrderOptions } = require('../../../lib/models')
+const { Position, Balance, ExchangeOrder, OrderOptions } = require('../../../lib/models')
 const Exchange = require('../../../lib/exchanges/simulation')
 
 describe('PositionManager', () => {
@@ -9,7 +9,7 @@ describe('PositionManager', () => {
     const timestamp = moment().utc().subtract(5, 'minutes').toDate()
     const market = Factory('market').build()
 
-    describe('when position entry order is FILLED', () => {
+    describe('when position entry orders are FILLED', () => {
       let exchangeOrder
       let entryOrder
 
@@ -46,6 +46,39 @@ describe('PositionManager', () => {
           })
         })
 
+        describe('and the position is CLOSING', () => {
+          let position
+          let manager
+
+          beforeEach(() => {
+            position = Factory('position').build({
+              status: Position.statuses.CLOSING,
+              orders: [entryOrder],
+              exits: [
+                {
+                  exchange: 'binance',
+                  market: market.symbol,
+                  type: OrderOptions.types.STOP_LOSS,
+                  baseQuantity: '99.9',
+                  stopPrice: '($map(entries.averagePrice, $number) ~> $sum) * 0.99'
+                }
+              ]
+            })
+
+            manager = new PositionManager({ trader: { on: () => {}, emitAsync: () => {}, exchange }, positions: [position] })
+          })
+
+          it('does not evaluate exit orders!', async () => {
+            exchange.setTick(10)
+            exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
+
+            exchange.evaluate()
+            await manager.evaluate()
+
+            expect(position.orders.length).to.eql(1)
+          })
+        })
+
         describe('and there are no existing matching exit orders', () => {
           describe('order', () => {
             let position
@@ -79,12 +112,8 @@ describe('PositionManager', () => {
               exchange.setTick(10)
               exchange.setCandle({ timestamp, open: 9, high: 12, low: 8, close: 11 })
 
-              try {
-                exchange.evaluate()
-                await manager.evaluate()
-              } catch (err) {
-                console.log('err', err)
-              }
+              exchange.evaluate()
+              await manager.evaluate()
 
               expect(position.orders.length).to.eql(3)
             })
@@ -308,7 +337,7 @@ describe('PositionManager', () => {
       })
     })
 
-    describe('when position entry order is not FILLED', () => {
+    describe('when position entry orders are not all FILLED', () => {
       let exchange
       let position
       let manager
