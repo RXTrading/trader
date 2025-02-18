@@ -30,6 +30,14 @@ describe('OrderOptions Model', () => {
     expect(OrderOptions.buyTypes).to.eql([OrderOptions.types.MARKET, OrderOptions.types.LIMIT])
   })
 
+  it('has stop loss types', () => {
+    expect(OrderOptions.stopLossTypes).to.eql([OrderOptions.types.STOP_LOSS, OrderOptions.types.STOP_LOSS_LIMIT])
+  })
+
+  it('has take profit types', () => {
+    expect(OrderOptions.takeProfitTypes).to.eql([OrderOptions.types.TAKE_PROFIT, OrderOptions.types.TAKE_PROFIT_LIMIT])
+  })
+
   describe('params', () => {
     const defaultParams = {
       exchange: 'binance',
